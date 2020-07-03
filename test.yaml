@@ -52,3 +52,4 @@ new_link_tries: 20
 print_frequency: 30
 babies_stolen: 0
 number_of_runs: 100
+verbosity: 3
