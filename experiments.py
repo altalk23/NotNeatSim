@@ -49,7 +49,7 @@ def xor_test(generation_count: int) -> Population:
             vprint(2, f'Epoch {generation_number}')
 
             # Check for success
-            epoch = xor_epoch(population, generation_number)
+            epoch = xor_epoch(population, experiment_number, generation_number)
             if (epoch['passed']):
                 evals[experiment_number] = neat.population_size * (generation_number - 1) + epoch['winner_id']
                 genes[experiment_number] = epoch['winner_genes']
@@ -93,7 +93,7 @@ def xor_test(generation_count: int) -> Population:
 
 
 
-def xor_epoch(population: Population, generation_number: int) -> Dict[str, int]:
+def xor_epoch(population: Population, experiment_number: int, generation_number: int) -> Dict[str, int]:
 
     # Variable annotations
     winner_id: int
@@ -119,12 +119,11 @@ def xor_epoch(population: Population, generation_number: int) -> Dict[str, int]:
 
 
     # Print to file
-    if passed and generation_number & neat.print_frequency:
-        population.print_to_file(generation_number)
-
     if passed:
+        population.print_to_file(experiment_number, generation_number)
+
         vprint(1, f'Winner is organism number {winner_id}')
-        organism.print_to_file()
+        organism.print_to_file(experiment_number)
 
     population.epoch(generation_number)
 
@@ -200,7 +199,7 @@ def xor_evaluate(organism: Organism) -> bool:
         errorsum = 999.0
         organism.fitness = 0.001
 
-    vprint(3, f'Orgainsm: {organism.genome.id}')
+    vprint(3, f'Organism: {organism.genome.id}')
     vprint(3, f'Error: {output_list} -> {errorsum}')
     vprint(3, f'Fitness: {organism.fitness}')
 
