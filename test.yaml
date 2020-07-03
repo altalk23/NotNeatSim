@@ -1,0 +1,54 @@
+# I don't know
+link_trait_mutation_sig: 1.0
+node_trait_mutation_sig: 0.5
+
+
+# Mutation powers
+trait_mutation_power: 1.0
+weight_mutation_power: 2.5
+
+
+# Mutation probabilities
+trait_parameter_mutation_probability: 0.5
+mutate_only_probability: 0.25
+mutate_random_trait_probability: 0.1
+mutate_link_trait_probability: 0.1
+mutate_node_trait_probability: 0.1
+mutate_link_weights_probability: 0.9
+mutate_toggle_enable_probability: 0.00
+mutate_gene_reenable_probability: 0.000
+mutate_add_node_probability: 0.03
+mutate_add_link_probability: 0.05
+
+
+# Coefficients
+disjoint_coefficient: 1.0
+excess_coefficient: 1.0
+mutation_difference_coefficient: 0.4
+
+
+# Probabilities
+recurse_probability: 0.00
+recurse_only_probability: 0.0
+
+
+# Mating
+interspecies_mate_rate: 0.001
+mate_multipoint_average_probability: 0.4
+mate_singlepoint_probability: 0.0
+mate_only_probability: 0.2
+
+
+# Thresholds
+compatibility_threshold: 3.0
+survival_threshold: 0.20
+
+
+# Constants
+age_significance: 1.0
+population_size: 150
+dropoff_age: 15
+new_link_tries: 20
+print_frequency: 30
+babies_stolen: 0
+number_of_runs: 100
