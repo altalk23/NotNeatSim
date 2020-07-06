@@ -52,6 +52,7 @@ class Node:
     place: NodePlace = None,
     node: Node = None,
     trait: Trait = None,
+    traits: List[Trait] = None,
     data: Dict = None) -> None:
 
         # Construct a node from type, id and place
@@ -71,8 +72,23 @@ class Node:
             raise NotImplementedError
 
         # Generate the object from dict
-        elif (data is not None):
-            raise NotImplementedError
+        elif (data is not None and
+        traits is not None):
+        
+            self.frozen = False
+            self.override = float('nan')
+
+            self.id = data['id']
+            self.type = NodeType(data['type'])
+            self.place = NodePlace(data['place'])
+
+            if data['trait'] == 0:
+                self.trait = None
+            else:
+                for trait in traits:
+                    if trait.id == data['trait']:
+                        self.trait = trait
+                        break
 
 
     # Return the dict representation of the object
@@ -114,7 +130,7 @@ class Node:
     def outputOverride(self) -> None:
         if not isnan(self.override):
             self.output = self.override
-            self.override = float("nan")
+            self.override = float('nan')
 
 
     # Writes back changes weight values into the genome

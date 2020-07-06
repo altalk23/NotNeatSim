@@ -7,9 +7,9 @@ from typing import Dict, List
 from yaml import dump
 
 import neat
+import organism
 from genome import *
 from mutator import *
-from organism import *
 from print import *
 from specie import *
 
@@ -68,7 +68,7 @@ class Population:
         # Variable annotations
         count: int
         newGenome: Genome
-        newOrganism: Organism
+        newOrganism: organism.Organism
 
         # Create copies of the genome
         for count in range(1, size+1):
@@ -76,7 +76,7 @@ class Population:
             newGenome.mutateLinkWeights(1.0, 1.0, Mutator.GAUSSIAN)
             newGenome.randomizeTraits()
 
-            newOrganism = Organism(fit=0.0, genome=newGenome, generation=1);
+            newOrganism = organism.Organism(fitness=0.0, genome=newGenome, generation=1);
             self.organisms.append(newOrganism)
 
         # Store the current node id and innovation number
@@ -91,7 +91,7 @@ class Population:
     def speciate(self) -> None:
 
         # Variable annotations
-        compareOrganism: Organism
+        compareOrganism: organism.Organism
         newSpecie: Specie
 
         # Loop for each organism
@@ -422,20 +422,20 @@ class Population:
 
 
     # Removes worst member of population that has been around
-    def removeWorst(self) -> Organism:
+    def removeWorst(self) -> organism.Organism:
         raise NotImplementedError
 
 
     # Reproduce only out of the pop champ
-    def reproduceChampion(self, generation: int) -> Organism:
+    def reproduceChampion(self, generation: int) -> organism.Organism:
         raise NotImplementedError
 
 
     # This method takes an Organism and reassigns what Species it belongs to
-    def reassignSpecie(self, organism: Organism) -> None:
+    def reassignSpecie(self, organism: organism.Organism) -> None:
         raise NotImplementedError
 
 
     # Move an Organism from one Species to another (called by reassignSpecie)
-    def switchSpecie(self, organism: Organism, originalSpecie: Specie, newSpecie: Specie) -> None:
+    def switchSpecie(self, organism: organism.Organism, originalSpecie: Specie, newSpecie: Specie) -> None:
         raise NotImplementedError

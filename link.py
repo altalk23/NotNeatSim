@@ -26,7 +26,7 @@ class Link:
     weight: float = None,
     inode: Node = None,
     onode: Node = None,
-    recur: bool = None,
+    recurrent: bool = None,
     link: Link = None) -> None:
 
         # Including a trait pointer in the Link creation
@@ -34,14 +34,22 @@ class Link:
         weight is not None and
         inode is not None and
         onode is not None and
-        recur is not None):
-            raise NotImplementedError
+        recurrent is not None):
+
+            self.trait = trait
+            self.weight = weight
+            self.inode = inode
+            self.onode = onode
+            self.recurrent = recurrent
+
+            self.addedWeight = 0
+            self.timeDelay = False
 
         # Base Constructor
         elif (weight is not None and
         inode is not None and
         onode is not None and
-        recur is not None):
+        recurrent is not None):
             raise NotImplementedError
 
         # For when you don't know the connections yet

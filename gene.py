@@ -56,14 +56,35 @@ class Gene:
             raise NotImplementedError
 
         # Construct a gene from a file spec given traits and nodes
-        elif (file is not None and
+        elif (data is not None and
         traits is not None and
         nodes is not None):
-            raise NotImplementedError
 
-        # Generate the object from dict
-        elif (data is not None):
-            raise NotImplementedError
+            inode: Node
+            onode: Node
+            trait: Trait
+
+            self.frozen = False
+
+            self.innovation = data['innovation']
+            self.mutation = data['mutation']
+            self.enable = data['enable']
+
+            if data['trait'] == 0:
+                trait = None
+            else:
+                for trait in traits:
+                    if trait.id == data['trait']:
+                        self.trait = trait
+                        break
+
+            for node in nodes:
+                if node.id == data['input']:
+                    inode = node
+                if node.id == data['output']:
+                    onode = node
+
+            self.link = Link(trait=trait, weight=data['weight'], inode=inode, onode=onode, recurrent=data['recurrent'])
 
 
     # Return the dict representation of the object

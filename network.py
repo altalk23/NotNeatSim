@@ -27,7 +27,7 @@ class Network:
     def __init__(self,
     inodes: List[Node] = None,
     onodes: List[Node] = None,
-    all: List[Node] = None,
+    allnodes: List[Node] = None,
     id: int = None,
     adaptable: bool = None,
     network: Network = None) -> None:
@@ -35,7 +35,7 @@ class Network:
         # This constructor allows the input and output lists to be supplied
         if (inodes is not None and
         onodes is not None and
-        all is not None and
+        allnodes is not None and
         id is not None and
         adaptable is not None):
             raise NotImplementedError
@@ -43,7 +43,7 @@ class Network:
         # Same as previous but without adaptable
         elif (inodes is not None and
         onodes is not None and
-        all is not None and
+        allnodes is not None and
         id is not None):
             raise NotImplementedError
 

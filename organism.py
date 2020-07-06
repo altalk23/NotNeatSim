@@ -17,7 +17,7 @@ class Organism:
     nework: Network
     specie: Specie
 
-    expectedOffspring: double
+    expectedOffspring: float
     superChampionOffspring: int
 
     generation: int
@@ -37,16 +37,40 @@ class Organism:
     metadata: str
 
     def __init__(self,
-    fit: int = None,
+    fitness: int = None,
     genome: Genome = None,
+    metadata: str = '',
     generation: int = None,
     data: Dict[str, object] = None) -> None:
 
         # Initialize organism from fit, genome and generation number
-        if (fit is not None and
+        if (fitness is not None and
         genome is not None and
         generation is not None):
-            raise NotImplementedError
+
+            self.specie = None
+            self.expectedOffspring = 0
+            self.superChampionOffspring = 0
+            self.eliminate = False
+            self.winner = False
+            self.champion = False
+            self.error = 0
+            self.timeAlive = 0
+            # debug?
+            self.mateBaby = False
+            self.mutationStructureBaby = False
+            self.populationChampion = False
+            self.populationChampionChild = False
+
+            self.fitness = fitness
+            self.originalFitness = fitness
+            self.genome = genome
+            self.generation = generation
+            self.metadata = metadata
+
+            self.network = genome.genesis(genome.id)
+
+
 
         # Generate the object from dict
         elif (data is not None):

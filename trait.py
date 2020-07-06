@@ -33,7 +33,8 @@ class Trait:
 
         # Generate the object from dict
         elif (data is not None):
-            raise NotImplementedError
+            self.id = data['id']
+            self.params = data['params']
 
 
     # Return the dict representation of the object

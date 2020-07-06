@@ -17,7 +17,7 @@ def main():
 
     vprint(0, 'Please choose an experiment:')
     vprint(0, '1 - XOR')
-    choice = input('Number: ')
+    choice = '1' # input('Number: ')
 
     if choice == '1':
         population = experiments.xorTest(100)

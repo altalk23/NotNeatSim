@@ -35,8 +35,8 @@ def xorTest(generationCount: int) -> Population:
     vprint(1, 'Reading in the start genome')
 
     with open('xorstartgenome.yaml') as file:
-        config = load(file, Loader=Loader)
-        startGenome = Genome(config=config)
+        data = load(file, Loader=Loader)
+        startGenome = Genome(data=data)
 
 
     for experimentNumber in range(neat.numberOfRuns):
