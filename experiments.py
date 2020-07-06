@@ -3,22 +3,24 @@ from typing import List, Dict
 from yaml import load, Loader
 
 from population import Population
+from organism import Organism
+from genome import Genome
 from print import vprint
 import neat
 
-def xor_test(generation_count: int) -> Population:
+def xorTest(generationCount: int) -> Population:
 
     # Variable annotations
     population: Population
-    start_genome: Genome
+    startGenome: Genome
 
     evals: List[int]
     genes: List[int]
     nodes: List[int]
 
-    total_nodes: int = 0
-    total_genes: int = 0
-    total_evals: int = 0
+    totalNodes: int = 0
+    totalGenes: int = 0
+    totalEvals: int = 0
     samples: int = 0 # Used for averaging
 
 
@@ -32,60 +34,60 @@ def xor_test(generation_count: int) -> Population:
 
     with open('xorstartgenome.yaml') as file:
         config = load(file, Loader=Loader)
-        start_genome = Genome(config=config)
+        startGenome = Genome(config=config)
 
 
-    for experiment_number in range(neat.number_of_runs):
+    for experimentNumber in range(neat.numberOfRuns):
 
         # Spawn the population
         vprint(1, 'Spawning the population')
-        population = Population(genome=start_genome, size=neat.population_size)
+        population = Population(genome=startGenome, size=neat.populationSize)
 
         # Verify the population
         vprint(1, 'Verifying the spawned population')
         population.verify()
 
-        for generation_number in range(1, generation_count + 1):
-            vprint(2, f'Epoch {generation_number}')
+        for generationNumber in range(1, generationCount + 1):
+            vprint(2, f'Epoch {generationNumber}')
 
             # Check for success
-            epoch = xor_epoch(population, experiment_number, generation_number)
+            epoch = xorEpoch(population, experimentNumber, generationNumber)
             if (epoch['passed']):
-                evals[experiment_number] = neat.population_size * (generation_number - 1) + epoch['winner_id']
-                genes[experiment_number] = epoch['winner_genes']
-                nodes[experiment_number] = epoch['winner_nodes']
+                evals[experimentNumber] = neat.populationSize * (generationNumber - 1) + epoch['winnerId']
+                genes[experimentNumber] = epoch['winnerGenes']
+                nodes[experimentNumber] = epoch['winnerNodes']
                 break
 
 
-        if experiment_number < neat.number_of_runs - 1:
+        if experimentNumber < neat.numberOfRuns - 1:
             del population
 
 
     # Print statistics
 
     vprint(1, 'Nodes:')
-    for experiment_number in range(neat.number_of_runs):
-        vprint(2, nodes[experiment_number])
-        total_nodes += nodes[experiment_number]
+    for experimentNumber in range(neat.numberOfRuns):
+        vprint(2, nodes[experimentNumber])
+        totalNodes += nodes[experimentNumber]
 
 
     vprint(1, 'Genes:')
-    for experiment_number in range(neat.number_of_runs):
-        vprint(2, genes[experiment_number])
-        total_genes += genes[experiment_number]
+    for experimentNumber in range(neat.numberOfRuns):
+        vprint(2, genes[experimentNumber])
+        totalGenes += genes[experimentNumber]
 
 
     vprint(1, 'Evals:')
-    for experiment_number in range(neat.number_of_runs):
-        vprint(2, evals[experiment_number])
-        if evals[experiment_number] > 0:
-            total_evals += nodes[experiment_number]
+    for experimentNumber in range(neat.numberOfRuns):
+        vprint(2, evals[experimentNumber])
+        if evals[experimentNumber] > 0:
+            totalEvals += nodes[experimentNumber]
             samples += 1
 
-    vprint(1, f'Failures: {neat.number_of_runs - samples} out of {neat.number_of_runs} runs')
-    vprint(1, f'Average Nodes {0 if samples == 0 else total_nodes / samples}')
-    vprint(1, f'Average Genes {0 if samples == 0 else total_genes / samples}')
-    vprint(1, f'Average Evals {0 if samples == 0 else total_evals / samples}')
+    vprint(1, f'Failures: {neat.numberOfRuns - samples} out of {neat.numberOfRuns} runs')
+    vprint(1, f'Average Nodes {0 if samples == 0 else totalNodes / samples}')
+    vprint(1, f'Average Genes {0 if samples == 0 else totalGenes / samples}')
+    vprint(1, f'Average Evals {0 if samples == 0 else totalEvals / samples}')
 
 
 
@@ -93,46 +95,46 @@ def xor_test(generation_count: int) -> Population:
 
 
 
-def xor_epoch(population: Population, experiment_number: int, generation_number: int) -> Dict[str, int]:
+def xorEpoch(population: Population, experimentNumber: int, generationNumber: int) -> Dict[str, int]:
 
     # Variable annotations
-    winner_id: int
-    winner_nodes: int
-    winner_genes: int
-    winner_organism: Organism
+    winnerId: int
+    winnerNodes: int
+    winnerGenes: int
+    winnerOrganism: Organism
     passed: bool = False
 
     # Evaluate each organism
     for organism in population.organisms:
-        if xor_evaluate(organism):
+        if xorEvaluate(organism):
             passed = True
-            winner_organism = organism
-            winner_id = organism.genome.id
-            winner_genes = organism.genome.extrons()
-            winner_nodes = len(organism.genome.nodes)
+            winnerOrganism = organism
+            winnerId = organism.genome.id
+            winnerGenes = organism.genome.extrons()
+            winnerNodes = len(organism.genome.nodes)
 
 
     # Average and max fitnesses of species
     for specie in population.species:
-        specie.compute_average_fitness()
-        specie.compute_max_fitness()
+        specie.computeAverageFitness()
+        specie.computeMaxFitness()
 
 
     # Print to file
     if passed:
-        population.print_to_file(experiment_number, generation_number)
+        population.printToFile(experimentNumber, generationNumber)
 
-        vprint(1, f'Winner is organism number {winner_id}')
-        organism.print_to_file(experiment_number)
+        vprint(1, f'Winner is organism number {winnerId}')
+        organism.printToFile(experimentNumber)
 
-    population.epoch(generation_number)
+    population.epoch(generationNumber)
 
     if passed:
         return {
             'passed': True,
-            'winner_id': winner_id,
-            'winner_nodes': winner_nodes,
-            'winner_genes': winner_genes
+            'winnerId': winnerId,
+            'winnerNodes': winnerNodes,
+            'winnerGenes': winnerGenes
         }
 
     return {
@@ -141,24 +143,24 @@ def xor_epoch(population: Population, experiment_number: int, generation_number:
 
 
 
-def xor_evaluate(organism: Organism) -> bool:
+def xorEvaluate(organism: Organism) -> bool:
     network: Network
 
-    output_list: List[float] = []
+    outputList: List[float] = []
 
-    expected_output_list: List[float] = [0.0, 1.0, 1.0, 0.0]
-    success_output_threshold: List[float] = [0.5, 0.5, 0.5, 0.5]
+    expectedOutputList: List[float] = [0.0, 1.0, 1.0, 0.0]
+    successOutputThreshold: List[float] = [0.5, 0.5, 0.5, 0.5]
 
     # Check for successful activation
     success: bool
 
     # Used for figuring out how many nodes should be visited
-    number_of_nodes: int
+    numberOfNodes: int
 
     # The maximum depth of the network
-    network_depth: int
+    networkDepth: int
 
-    input_list: List[List[float]] = [
+    inputList: List[List[float]] = [
         [1.0, 0.0, 0.0],
         [1.0, 0.0, 1.0],
         [1.0, 1.0, 0.0],
@@ -167,29 +169,29 @@ def xor_evaluate(organism: Organism) -> bool:
 
     network = organism.network
 
-    number_of_nodes = len(organism.genome.nodes)
-    network_depth = network.maximum_depth()
+    numberOfNodes = len(organism.genome.nodes)
+    networkDepth = network.maximumDepth()
 
     # Load and activate the network for each input
-    for input in input_list:
-        network.load_sensors(input)
+    for input in inputList:
+        network.loadSensors(input)
 
         success = network.activate()
 
-        for relax in range(network_depth + 1):
+        for relax in range(networkDepth + 1):
             success = network.activate()
             output = network.outputs[0].activation
 
-        output_list.append(network.outputs[0].activation)
+        outputList.append(network.outputs[0].activation)
 
         network.flush()
 
     if success:
         errorsum = 0
-        errorsum += abs(expected_output_list[0] - output_list[0])
-        errorsum += abs(expected_output_list[1] - output_list[1])
-        errorsum += abs(expected_output_list[2] - output_list[2])
-        errorsum += abs(expected_output_list[3] - output_list[3])
+        errorsum += abs(expectedOutputList[0] - outputList[0])
+        errorsum += abs(expectedOutputList[1] - outputList[1])
+        errorsum += abs(expectedOutputList[2] - outputList[2])
+        errorsum += abs(expectedOutputList[3] - outputList[3])
 
         organism.fitness = (4.0 - errorsum) ** 2
         organism.error = errorsum
@@ -200,15 +202,15 @@ def xor_evaluate(organism: Organism) -> bool:
         organism.fitness = 0.001
 
     vprint(3, f'Organism: {organism.genome.id}')
-    vprint(3, f'Error: {output_list} -> {errorsum}')
+    vprint(3, f'Error: {outputList} -> {errorsum}')
     vprint(3, f'Fitness: {organism.fitness}')
 
     # Check if meets conditions
     if (
-        abs(output_list[0] - expected_output_list[0]) <= success_output_threshold[0] and
-        abs(output_list[1] - expected_output_list[1]) <= success_output_threshold[1] and
-        abs(output_list[2] - expected_output_list[2]) <= success_output_threshold[2] and
-        abs(output_list[3] - expected_output_list[3]) <= success_output_threshold[3]
+        abs(outputList[0] - expectedOutputList[0]) <= successOutputThreshold[0] and
+        abs(outputList[1] - expectedOutputList[1]) <= successOutputThreshold[1] and
+        abs(outputList[2] - expectedOutputList[2]) <= successOutputThreshold[2] and
+        abs(outputList[3] - expectedOutputList[3]) <= successOutputThreshold[3]
     ):
         organism.winner = True
     else:

@@ -11,7 +11,7 @@ def main():
         return -1
 
     # Load the parameters
-    neat.load_parameters(argv[1])
+    neat.loadParameters(argv[1])
     vprint(1, f'Loaded parameters from file {argv[1]}')
 
     vprint(0, 'Please choose an experiment:')
@@ -19,7 +19,7 @@ def main():
     choice = input('Number: ')
 
     if choice == '1':
-        population = experiments.xor_test(100)
+        population = experiments.xorTest(100)
     else:
         vprint(0, 'Not an option.')
 

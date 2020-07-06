@@ -1,10 +1,10 @@
 population:
-    experiment_number: 1
-    generation_number: 2
+    experimentNumber: 1
+    generationNumber: 2
     species:
         - id: 1
         size: 3
-        average_fitness: 7
+        averageFitness: 7
         age: 24
         organisms:
             - id: 0
