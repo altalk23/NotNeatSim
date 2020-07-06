@@ -1,15 +1,17 @@
+from __future__ import annotations
+
 from math import ceil, floor
 from random import random
-from typing import Dcit, List
+from typing import Dict, List
 
 from yaml import dump
 
-from genome import Genome
 import neat
-from mutator import Mutator
-from organism import Organism
-from specie import Specie
-from print import vprint
+from genome import *
+from mutator import *
+from organism import *
+from print import *
+from specie import *
 
 class Population:
 

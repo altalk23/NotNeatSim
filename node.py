@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from typing import List, Callable, Dict
 from math import isnan
+from typing import Callable, Dict, List
 
-from activation import Activation
-from aggregation import Aggregation
-from link import Link
-from network import Network
-from nodeplace import NodePlace
-from nodetype import NodeType
-from trait import Trait
+from activation import *
+from aggregation import *
+from link import *
+from network import *
+from nodeplace import *
+from nodetype import *
+from trait import *
 
 class Node:
 

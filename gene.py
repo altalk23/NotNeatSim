@@ -1,9 +1,10 @@
 from __future__ import annotations
-from typing import TextIO, List, Dict
 
-from link import Link
-from node import Node
-from trait import Trait
+from typing import Dict, List, TextIO
+
+from link import *
+from node import *
+from trait import *
 
 class Gene:
 

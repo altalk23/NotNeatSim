@@ -1,12 +1,14 @@
-from typing import List, Dict
+from __future__ import annotations
+
+from typing import Dict, List
 
 from yaml import load, Loader
 
-from population import Population
-from organism import Organism
-from genome import Genome
-from print import vprint
 import neat
+from genome import *
+from organism import *
+from population import *
+from print import *
 
 def xorTest(generationCount: int) -> Population:
 

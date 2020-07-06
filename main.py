@@ -1,7 +1,8 @@
 from sys import argv
-import neat
+
 import experiments
-from print import vprint
+import neat
+from print import *
 
 def main():
 

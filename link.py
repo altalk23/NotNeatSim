@@ -1,8 +1,9 @@
 from __future__ import annotations
-from typings import List
 
-from node import Node
-from trait import Trait
+from typing import List
+
+from node import *
+from trait import *
 
 class Link:
 

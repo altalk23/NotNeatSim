@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import List, Dict
+from typing import Dict, List
 
-from organism import Organism
-from population import Population
+from organism import *
+from population import *
 
 class Specie:
 

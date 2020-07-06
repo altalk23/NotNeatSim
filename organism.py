@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Dict
 
-from genome import Genome
-from network import Network
-from specie import Specie
+from genome import *
+from network import *
+from specie import *
 
 class Organism:
 

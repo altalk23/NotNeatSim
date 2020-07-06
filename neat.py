@@ -1,4 +1,5 @@
 from yaml import load, Loader
+
 from genome import Genome
 
 verbosity: int = 0
@@ -125,8 +126,3 @@ def loadParameters(parameterFile: str) -> None:
         babiesStolen = parameter['babiesStolen']
         numberOfRuns = parameter['numberOfRuns']
         verbosity = parameter['verbosity']
-
-
-
-def newGenomeAuto(self, inCount: int, hiddenCount: int, outCount: int, type: int, filename: str) -> Genome:
-    raise NotImplementedError

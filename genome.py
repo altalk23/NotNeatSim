@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 from typing import Dict, List
 
-from network import Network
-from mutator import Mutator
+from mutator import *
+from network import *
 
 class Genome:
 

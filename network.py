@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import List
 
-from genome import Genome
-from node import Node
+from genome import *
+from node import *
 
 class Network:
 
@@ -25,24 +25,24 @@ class Network:
 
 
     def __init__(self,
-    in: List[Node] = None,
-    out: List[Node] = None,
+    inodes: List[Node] = None,
+    onodes: List[Node] = None,
     all: List[Node] = None,
     id: int = None,
     adaptable: bool = None,
     network: Network = None) -> None:
 
         # This constructor allows the input and output lists to be supplied
-        if (in is not None and
-        out is not None and
+        if (inodes is not None and
+        onodes is not None and
         all is not None and
         id is not None and
         adaptable is not None):
             raise NotImplementedError
 
         # Same as previous but without adaptable
-        elif (in is not None and
-        out is not None and
+        elif (inodes is not None and
+        onodes is not None and
         all is not None and
         id is not None):
             raise NotImplementedError
@@ -102,7 +102,7 @@ class Network:
 
 
     # This checks a POTENTIAL link if it must be recurrent
-    def isRecurrent(self, in: Node, out: Node, count: int, threshold: int) -> bool:
+    def isRecurrent(self, inode: Node, onode: Node, count: int, threshold: int) -> bool:
         raise NotImplementedError
 
 
