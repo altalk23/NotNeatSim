@@ -1,15 +1,15 @@
-from typing import List
 from math import ceil, floor
-from random import randint
+from random import random
+from typing import Dcit, List
 
 from yaml import dump
 
 from genome import Genome
-from organism import Organism
+import neat
 from mutator import Mutator
+from organism import Organism
 from specie import Specie
 from print import vprint
-import neat
 
 class Population:
 
@@ -17,23 +17,50 @@ class Population:
     organisms: List[Organism] = []
     species: List[Specie] = []
 
-    winnerGenome: int
-    highestFitness: float
-    highestLastChanged: int
-
     currentNodeId: int
     currentInnovationNumber: int
 
-    def __init__(self, genome: Genome=None, size: int=None) -> None:
-        # Initialize population from genome and size
-        if genome and size:
-            self.winnerGenome = 0
+    meanFitness: float
+    variance: float
+    standardDeviation: float
+    highestFitness: float
+    highestLastChanged: float
+
+    winnerGeneration: int
+
+
+    def __init__(self,
+    genome: Genome = None,
+    size: int = None,
+    power: float = None,
+
+    data: Dict[str, object] = None) -> None:
+
+        # Construct off of a single spawning Genome without mutation
+        if (genome is not None and
+        size is not None and
+        power is not None):
+            raise NotImplementedError
+
+        # Construct off of a single spawning Genome
+        elif (genome is not None and
+        size is not None):
+            self.winnerGeneration = 0
             self.highestFitness = 0.0
             self.highestLastChanged = 0
             self.spawn(genome, size)
 
+        # Generate the object from dict
+        elif (data is not None):
+            raise NotImplementedError
 
 
+    # Return the dict representation of the object
+    def toDict(self) -> Dict[str, object]:
+        raise NotImplementedError
+
+
+    # A Population can be spawned off of a single Genome
     def spawn(self, genome: Genome, size: int) -> None:
 
         # Variable annotations
@@ -58,7 +85,7 @@ class Population:
         self.speciate()
 
 
-
+    # Separate the Organisms into species
     def speciate(self) -> None:
 
         # Variable annotations
@@ -87,8 +114,10 @@ class Population:
                 organism.specie = newSpecie # TODO: move this to addOrganism module
 
 
-
+    # Certified UwU moment
     def printToFile(self, experimentNumber: int, generationNumber: int) -> None:
+        raise DeprecationWarning
+
         with open(f'output/Population #{experimentNumber}.{generationNumber}') as file:
             species = []
 
@@ -104,7 +133,7 @@ class Population:
             }, file)
 
 
-
+    # Turnover the population to a new generation using fitness
     def epoch(self, generation: int) -> None:
 
         # Variable annotations
@@ -208,7 +237,7 @@ class Population:
         # TODO: Cleanup this code vv
 
         # Check for stagnation- if there is stagnation, perform delta-coding
-        if highestLastChanged >= neat.dropoffAge + 5:
+        if self.highestLastChanged >= neat.dropoffAge + 5:
             vprint(3, f'Performing delta coding')
             self.highestLastChanged = 0
 
@@ -301,7 +330,7 @@ class Population:
                 while stolenBabies > 0:
                     # Randomize a little
 
-                    if randint(0, 9) > 0:
+                    if random() > 0.1:
                         specie.organisms[0].superChampionOffspring += min(3, stolenBabies)
                         specie.expectedOffspring += min(3, stolenBabies)
                         stolenBabies -= min(3, stolenBabies)
@@ -365,51 +394,46 @@ class Population:
         vprint(2, f'Epoch completed')
 
 
-
+    # why
     def verify(self) -> None:
         raise NotImplementedError
 
 
-
-    def copy(self, genome: Genome, size: int, power: float) -> None:
-        raise NotImplementedError
-
-
-
+    # Places the organisms in species in order from best to worst fitness
     def rankWithinSpecies(self) -> None:
         raise NotImplementedError
 
 
-
+    # Estimates average fitness for all existing species
     def estimateAllAverages(self) -> None:
         raise NotImplementedError
 
 
-
+    # Probabilistically choose a species to reproduce
     def chooseParentSpecie(self) -> Specie:
         raise NotImplementedError
 
 
-
+    # Remove a specie from the species list
     def removeSpecie(self, specie: Specie) -> None:
         raise NotImplementedError
 
 
-
+    # Removes worst member of population that has been around
     def removeWorst(self) -> Organism:
         raise NotImplementedError
 
 
-
-    def reproduceChamp(self, generation: int) -> Organism:
+    # Reproduce only out of the pop champ
+    def reproduceChampion(self, generation: int) -> Organism:
         raise NotImplementedError
 
 
-
+    # This method takes an Organism and reassigns what Species it belongs to
     def reassignSpecie(self, organism: Organism) -> None:
         raise NotImplementedError
 
 
-
+    # Move an Organism from one Species to another (called by reassignSpecie)
     def switchSpecie(self, organism: Organism, originalSpecie: Specie, newSpecie: Specie) -> None:
         raise NotImplementedError

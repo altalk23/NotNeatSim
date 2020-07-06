@@ -25,7 +25,8 @@ class Gene:
         mutation: int = None,
         file: TextIO = None,
         traits: List[Trait] = None,
-        nodes: List[Node] = None) -> None:
+        nodes: List[Node] = None,
+        data: Dict[str, object] = None) -> None:
 
         # Construct a gene with a trait
         if (trait is not None and
@@ -59,10 +60,11 @@ class Gene:
         nodes is not None):
             raise NotImplementedError
 
-        # Copy Constructor
-        elif (gene is not None):
+        # Generate the object from dict
+        elif (data is not None):
             raise NotImplementedError
 
 
+    # Return the dict representation of the object
     def toDict(self) -> Dict[str, object]:
         raise NotImplementedError

@@ -25,12 +25,12 @@ class Network:
 
 
     def __init__(self,
-    in: List[Node],
-    out: List[Node],
-    all: List[Node],
-    id: int,
-    adaptable: bool,
-    network: Network) -> None:
+    in: List[Node] = None,
+    out: List[Node] = None,
+    all: List[Node] = None,
+    id: int = None,
+    adaptable: bool = None,
+    network: Network = None) -> None:
 
         # This constructor allows the input and output lists to be supplied
         if (in is not None and

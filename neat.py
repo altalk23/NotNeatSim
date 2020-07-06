@@ -2,6 +2,7 @@ from yaml import load, Loader
 from genome import Genome
 
 verbosity: int = 0
+numberOfTraitParameters: int = 8
 
 def loadParameters(parameterFile: str) -> None:
     # Get global parameters
