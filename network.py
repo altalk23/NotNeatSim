@@ -4,48 +4,58 @@ from typing import List
 
 from genome import *
 from node import *
+from nodetype import *
 
 class Network:
 
     # Variable annotations
-    linkCount: int
+    linkCount: int = 0
+    nodeCount: int = 0
 
-    nodes: List[Node]
-    inputs: List[Node]
-    outputs: List[Node]
+    nodes: List[Node] = []
+    inputs: List[Node] = []
+    outputs: List[Node] = []
 
-    genotype: Genome
+    genotype: Genome = None
 
-    name: str
+    name: str = ''
 
-    id: int
+    id: int = 0
 
-    maxWeight: float
-    adaptable: bool
+    maxWeight: float = 0
+    adaptable: bool = False
 
 
     def __init__(self,
-    inodes: List[Node] = None,
-    onodes: List[Node] = None,
+    inputs: List[Node] = None,
+    outputs: List[Node] = None,
     allnodes: List[Node] = None,
     id: int = None,
     adaptable: bool = None,
     network: Network = None) -> None:
 
+        self.linkCount = -1
+        self.nodeCount = -1
+
         # This constructor allows the input and output lists to be supplied
-        if (inodes is not None and
-        onodes is not None and
+        if (inputs is not None and
+        outputs is not None and
         allnodes is not None and
         id is not None and
         adaptable is not None):
             raise NotImplementedError
 
         # Same as previous but without adaptable
-        elif (inodes is not None and
-        onodes is not None and
+        elif (inputs is not None and
+        outputs is not None and
         allnodes is not None and
         id is not None):
-            raise NotImplementedError
+
+            self.inputs = inputs
+            self.outputs = outputs
+            self.nodes = allnodes
+            self.id = id
+
 
         # This constructs a net with empty input and output lists
         elif (id is not None and
@@ -86,9 +96,13 @@ class Network:
         raise NotImplementedError
 
 
-    # Loads sensor calues
-    def loadSensors(self, value: float = None, values: List[float] = None) -> None:
-        raise NotImplementedError
+    # Loads sensor values
+    def loadSensors(self, values: List[float]) -> None:
+        value = iter(values)
+        for input in self.inputs:
+            if input.type == NodeType.SENSOR:
+                input.loadSensor(next(value))
+
 
 
     # Takes and array of output activations and OVERRIDES the outputs' actual activations
@@ -113,4 +127,4 @@ class Network:
 
     # Returns maximum depth:
     def maxDepth(self) -> int:
-        raise NotImplementedError
+        return max(output.depth(0, self) for output in self.outputs)

@@ -8,22 +8,22 @@ from population import *
 class Specie:
 
     # Variable annotations
-    id: int
-    age: int
+    id: int = 0
+    age: int = 0
 
-    averageFitness: float
-    maximumFitness: float
-    maxiumTotalFitness: float
+    averageFitness: float = 0
+    maximumFitness: float = 0
+    maxiumTotalFitness: float = 0
 
-    expectedOffspring: int
-    ageOfLastImprovement: int
-    averageEstimated: float
+    expectedOffspring: int = 0
+    ageOfLastImprovement: int = 0
+    averageEstimated: float = 0
 
-    novel: bool
-    checked: bool
-    obliterate: bool
+    novel: bool = False
+    checked: bool = False
+    obliterate: bool = False
 
-    organisms: List[Organism]
+    organisms: List[Organism] = []
 
 
     def __init__(self,
@@ -31,9 +31,12 @@ class Specie:
     novel: bool = False,
     data: Dict[str, object] = None) -> None:
 
+        self.age = 1
+
         # Creates a specie
         if (id is not None):
-            raise NotImplementedError
+            self.id = id
+            self.novel = novel
 
         # Generate the object from dict
         elif (data is not None):

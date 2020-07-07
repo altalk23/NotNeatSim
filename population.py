@@ -8,10 +8,10 @@ from yaml import dump
 
 import neat
 import organism
+import specie as sp
 from genome import *
 from mutator import *
 from print import *
-from specie import *
 
 class Population:
 
@@ -92,27 +92,27 @@ class Population:
 
         # Variable annotations
         compareOrganism: organism.Organism
-        newSpecie: Specie
+        newSpecie: sp.Specie
 
         # Loop for each organism
         for organism in self.organisms:
 
             # Search for each specie
             for specie in self.species:
-                compareOrganism = specie[0]
+                compareOrganism = specie.organisms[0]
 
                 # Found compatible specie, add organism to specie
                 if organism.genome.compatibility(compareOrganism.genome) < neat.compatibilityThreshold:
-                    specie.addOrganism(organism)
+                    specie.organisms.append(organism)
                     organism.specie = specie # TODO: move this to addOrganism module
                     break
 
             # Didn't find a match, create new specie
             else:
                 # Create the new specie
-                newSpecie = Specie(len(self.species) + 1)
+                newSpecie = sp.Specie(id=len(self.species) + 1)
                 self.species.append(newSpecie)
-                newSpecie.addOrganism(organism)
+                newSpecie.organisms.append(organism)
                 organism.specie = newSpecie # TODO: move this to addOrganism module
 
 
@@ -412,12 +412,12 @@ class Population:
 
 
     # Probabilistically choose a species to reproduce
-    def chooseParentSpecie(self) -> Specie:
+    def chooseParentSpecie(self) -> sp.Specie:
         raise NotImplementedError
 
 
     # Remove a specie from the species list
-    def removeSpecie(self, specie: Specie) -> None:
+    def removeSpecie(self, specie: sp.Specie) -> None:
         raise NotImplementedError
 
 
@@ -437,5 +437,5 @@ class Population:
 
 
     # Move an Organism from one Species to another (called by reassignSpecie)
-    def switchSpecie(self, organism: organism.Organism, originalSpecie: Specie, newSpecie: Specie) -> None:
+    def switchSpecie(self, organism: organism.Organism, originalSpecie: sp.Specie, newSpecie: sp.Specie) -> None:
         raise NotImplementedError

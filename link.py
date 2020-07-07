@@ -8,18 +8,18 @@ from trait import *
 class Link:
 
     # Variable annotations
-    weight: float
-    inode: Node
-    onode: Node
+    weight: float = 0
+    inode: Node = None
+    onode: Node = None
 
-    recurrent: bool
-    timeDelay: bool
+    recurrent: bool = False
+    timeDelay: bool = False
 
-    trait: Trait
+    trait: Trait = None
 
-    addedWeight: float
+    addedWeight: float = False
 
-    params: List[float]
+    params: List[float] = []
 
     def __init__(self,
     trait: Trait = None,
@@ -42,15 +42,16 @@ class Link:
             self.onode = onode
             self.recurrent = recurrent
 
-            self.addedWeight = 0
-            self.timeDelay = False
-
         # Base Constructor
         elif (weight is not None and
         inode is not None and
         onode is not None and
         recurrent is not None):
-            raise NotImplementedError
+
+            self.weight = weight
+            self.inode = inode
+            self.onode = onode
+            self.recurrent = recurrent
 
         # For when you don't know the connections yet
         elif (weight is not None):
@@ -63,4 +64,4 @@ class Link:
 
 
     def deriveTrait(self, trait: Trait) -> None:
-        raise NotImplementedError
+        self.trait = trait

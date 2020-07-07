@@ -10,40 +10,41 @@ from network import *
 from nodeplace import *
 from nodetype import *
 from trait import *
+import neat
 
 class Node:
 
     # Variable annotations
-    activationCount: int
-    lastActivation: float
-    lastActivation2: float
+    activationCount: int = 0
+    lastActivation: float = 0
+    lastActivation2: float = 0
 
-    trait: Trait
+    trait: Trait = None
 
-    duplicate: Node
-    analogue: Node
+    duplicate: Node = None
+    analogue: Node = None
 
-    override: float
+    override: float = 0
 
-    frozen: bool
+    frozen: bool = False
 
-    type: NodeType
-    place: NodePlace
-    activation: Callable
-    aggregation: Callable
+    type: NodeType = None
+    place: NodePlace = None
+    activation: Callable = None
+    aggregation: Callable = None
 
-    input: List[float]
-    output: float
+    input: List[float] = []
+    output: float = 0
 
-    incoming: List[Link]
-    outcoming: List[Link]
+    incoming: List[Link] = []
+    outcoming: List[Link] = []
 
-    rowLevels: List[float]
+    rowLevels: List[float] = []
     row: int
     xpos: int
     ypos: int
 
-    id: int
+    id: int = 0
 
 
     def __init__(self,
@@ -64,7 +65,9 @@ class Node:
         # Construct a node from type and id
         elif (type is not None and
         id is not None):
-            raise NotImplementedError
+
+            self.type = type
+            self.id = id
 
         # Construct a node off another node for genome purposes
         elif (node is not None and
@@ -74,7 +77,7 @@ class Node:
         # Generate the object from dict
         elif (data is not None and
         traits is not None):
-        
+
             self.frozen = False
             self.override = float('nan')
 
@@ -108,7 +111,12 @@ class Node:
 
     # If the node is a SENSOR, returns true and loads the value
     def loadSensor(self, value: float) -> None:
-        raise NotImplementedError
+        if self.type == NodeType.SENSOR:
+            self.activationCount += 1
+            self.lastActivation2 = self.lastActivation
+            self.lastActivation = self.output
+            self.output = value
+
 
 
     # Adds a Link to a new node in the incoming list
@@ -123,7 +131,7 @@ class Node:
 
     # Have node gain its properties from the trait
     def deriveTrait(self, trait: Trait) -> None:
-        raise NotImplementedError
+        self.trait = trait
 
 
     # Set activation to the override value and turn off override
@@ -140,4 +148,13 @@ class Node:
 
     # Find the greatest depth starting from this neuron at depth
     def depth(self, depth: int, network: Network) -> int:
-        raise NotImplementedError
+        # Noice
+        if depth > 30:
+            return 10
+
+        # Base case
+        if self.type == NodeType.SENSOR:
+            return depth
+
+        else:
+            return max(link.inode.depth(depth + 1, network) for link in self.incoming)

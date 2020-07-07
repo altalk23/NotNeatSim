@@ -10,6 +10,7 @@ from network import *
 from node import *
 from nodeplace import *
 from trait import *
+import neat
 
 class Genome:
 
@@ -103,7 +104,7 @@ class Genome:
         for node in self.nodes:
             newNode = Node(type=node.type, id=node.id)
 
-            node.deriveTrait(node.trait)
+            newNode.deriveTrait(node.trait)
 
             # Check for input or output designation of node
             if node.place is NodePlace.INPUT:
@@ -139,7 +140,7 @@ class Genome:
                 maxWeight = max(maxWeight, abs(newLink.weight))
 
         # Create the new network
-        newNet = Network(inodes=inputList, onodes=outputList, allnodes=allList, id=id)
+        newNet = Network(inputs=inputList, outputs=outputList, allnodes=allList, id=id)
 
         # Attach genotype and phenotype together
         newNet.genotype = self
@@ -182,12 +183,12 @@ class Genome:
 
     # Return id of final Node in Genome
     def getLastNodeId(self) -> int:
-        raise NotImplementedError
+        return self.nodes[-1].id + 1
 
 
     # Return last innovation number in Genome
-    def getLastGeneInnovnum(self) -> double:
-        raise NotImplementedError
+    def getLastInnovationNumber(self) -> double:
+        return self.genes[-1].innovation + 1
 
 
     # Perturb params in one trait
@@ -310,7 +311,41 @@ class Genome:
 
     # This function gives a measure of compatibility between two Genomes
     def compatibility(self, genome: Genome) -> float:
-        raise NotImplementedError
+
+        maxSize = max(len(self.genes), len(genome.genes))
+        excess = abs(len(self.genes) - len(genome.genes))
+        matching = 0
+        disjoint = 0
+        mutationDifference = 0
+
+        i1 = 0
+        i2 = 0
+
+        while i1 != len(self.genes) and i2 != len(genome.genes):
+
+            gene1 = self.genes[i1]
+            gene2 = genome.genes[i2]
+
+            if gene1.innovation == gene2.innovation:
+                matching += 1
+                mutationDifference += abs(gene1.mutation - gene2.mutation)
+
+                i1 += 1
+                i2 += 1
+
+            elif gene1.innovation > gene2.innovation:
+                disjoint += 1
+
+                i2 += 1
+
+            elif gene1.innovation < gene2.innovation:
+                disjoint += 1
+
+                i1 += 1
+
+        return (neat.disjointCoefficient * disjoint +
+        neat.excessCoefficient * excess +
+        neat.mutationDifferenceCoefficient * mutationDifference / matching)
 
 
     # This function compares two traits named trait1 and trait2

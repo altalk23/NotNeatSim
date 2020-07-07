@@ -47,7 +47,7 @@ def xorTest(generationCount: int) -> Population:
 
         # Verify the population
         vprint(1, 'Verifying the spawned population')
-        population.verify()
+        #population.verify()
 
         for generationNumber in range(1, generationCount + 1):
             vprint(2, f'Epoch {generationNumber}')
@@ -172,7 +172,7 @@ def xorEvaluate(organism: Organism) -> bool:
     network = organism.network
 
     numberOfNodes = len(organism.genome.nodes)
-    networkDepth = network.maximumDepth()
+    networkDepth = network.maxDepth()
 
     # Load and activate the network for each input
     for input in inputList:
