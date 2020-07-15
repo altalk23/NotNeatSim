@@ -1,9 +1,10 @@
-from yaml import load, Loader
+from random import uniform
 
-from genome import Genome
+from yaml import load, Loader
 
 verbosity: int = 0
 numberOfTraitParameters: int = 8
+timeAliveMinimum: int = 0
 
 def loadParameters(parameterFile: str) -> None:
     # Get global parameters
@@ -44,6 +45,7 @@ def loadParameters(parameterFile: str) -> None:
 
     # Mating
     global interspeciesMateRate
+    global mateMultipointProbability
     global mateMultipointAverageProbability
     global mateSinglepointProbability
     global mateOnlyProbability
@@ -107,6 +109,7 @@ def loadParameters(parameterFile: str) -> None:
 
         # Mating
         interspeciesMateRate = parameter['interspeciesMateRate']
+        mateMultipointProbability = parameter['mateMultipointProbability']
         mateMultipointAverageProbability = parameter['mateMultipointAverageProbability']
         mateSinglepointProbability = parameter['mateSinglepointProbability']
         mateOnlyProbability = parameter['mateOnlyProbability']
@@ -126,3 +129,21 @@ def loadParameters(parameterFile: str) -> None:
         babiesStolen = parameter['babiesStolen']
         numberOfRuns = parameter['numberOfRuns']
         verbosity = parameter['verbosity']
+
+
+iset = 0
+def gaussrand():
+    global gset, iset
+    rsq = 0
+    if iset == 0:
+        while rsq == 0 or rsg >= 1:
+            v1 = uniform(-1, 1)
+            v2 = uniform(-1, 1)
+            rsq = v1 ** 2 + v2 ** 2
+        fac = sqrt(-2 * log(rsq) / rsq)
+        gset = v1 * fac
+        iset = 1
+        return v2 * fac
+    else:
+        iset = 0
+        return gset

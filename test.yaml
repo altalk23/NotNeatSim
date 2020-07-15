@@ -34,6 +34,7 @@ recurrentOnlyProbability: 0.0
 
 # Mating
 interspeciesMateRate: 0.001
+mateMultipointProbability: 0.6
 mateMultipointAverageProbability: 0.4
 mateSinglepointProbability: 0.0
 mateOnlyProbability: 0.2

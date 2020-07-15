@@ -73,7 +73,10 @@ class Network:
 
     # Puts the network back into an inactive state
     def flush(self) -> None:
-        raise NotImplementedError
+
+        for output in self.outputs:
+            output.flushback()
+
 
 
     # Verify flushedness for debugging
@@ -83,7 +86,57 @@ class Network:
 
     # Activates the net such that all outputs are active
     def activate(self) -> None:
-        raise NotImplementedError
+
+        oneTime = False
+
+        # Keep activating until all the outputs have become active
+        if self.outputsOff():
+
+            # For each node, compute the aggregation of its incoming activation
+            for node in self.nodes:
+
+                # Ignore SENSORS
+                if node.type is not NodeType.SENSOR:
+
+                    node.inputs = []
+                    node.activeFlag = False
+
+                    # For each incoming connection, add the activity from the connection to the activesum
+                    for link in node.incoming:
+                        # Handle possible time delays
+                        if not link.timeDelay:
+                            node.inputs.append(link.weight * link.inode.getActiveOut())
+
+                            if (link.inode.activeFlag or link.inode.type is NodeType.SENSOR):
+                                link.inode.activeFlag = True
+
+                        # Input over a time delayed connection
+                        else:
+                            node.inputs.append(link.weight * link.inode.getActiveOutPrevious())
+
+
+            # Now activate all the non-sensor nodes off their incoming activation
+            for node in self.nodes:
+
+                # Only activate if some active input came in
+                if node.type is not NodeType.SENSOR and node.activeFlag:
+
+                    # Keep a memory of activations for potential time delayed connections
+                    node.lastActivation2 = node.lastActivation
+                    node.lastActivation = node.output
+
+                    # If the node is being overrided from outside, stick in the override value
+                    if node.override:
+                        node.outputOverride()
+
+                    # Now run the net activation through an activation function
+                    else:
+                        node.output = node.activation(node.aggregation(node.inputs))
+
+                    # Increment the activationCount
+
+                    node.activationCount += 1
+
 
 
     # Add a new input node
@@ -122,7 +175,10 @@ class Network:
 
     # If all output are not active then return true
     def outputsOff(self) -> bool:
-        raise NotImplementedError
+        for node in self.outputs:
+            if node.activationCount == 0:
+                return True
+        return False
 
 
     # Returns maximum depth:

@@ -119,7 +119,7 @@ def xorEpoch(population: Population, experimentNumber: int, generationNumber: in
     # Average and max fitnesses of species
     for specie in population.species:
         specie.computeAverageFitness()
-        specie.computeMaxFitness()
+        specie.computeMaximumFitness()
 
 
     # Print to file
@@ -182,9 +182,9 @@ def xorEvaluate(organism: Organism) -> bool:
 
         for relax in range(networkDepth + 1):
             success = network.activate()
-            output = network.outputs[0].activation
+            output = network.outputs[0].output
 
-        outputList.append(network.outputs[0].activation)
+        outputList.append(network.outputs[0].output)
 
         network.flush()
 

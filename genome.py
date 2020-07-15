@@ -273,9 +273,192 @@ class Genome:
     def mutateAddNode(self, innovations: List[Innovation], currentInnovationNumber: int, currentNodeId: int) -> None:
         raise NotImplementedError
 
-
+    """
+    CODED BY BIRKIY
+    fixed
+    """
     # Mutate the genome by adding a new link between 2 random nodes
     def mutateAddLink(self, innovations: List[Innovation], currentInnovationNumber: int, tries: int) -> None:
+        nodeCount: int # Counter for finding nodes
+        node1: Node # Pointers to the nodes
+        node2: Node # Pointers to the nodes
+        found: bool = False # Tells whether an open pair was found
+
+        isRecurrent: bool # Indicates whether proposed link is recurrent
+        newGene: Gene # The new gene
+
+        trait: Trait # Random trait finder
+
+        newWeight: float # The new weight for the new link
+
+        done: bool
+        recurrent: bool = False
+        loopRecurrent: bool
+        firstNonSensorIndex: int = 0
+
+        # These are used to avoid getting stuck in an infinite loop checking
+    	# for recursion
+        # Note that we check for recursion to control the frequency of
+    	# adding recurrent links rather than to prevent any paricular
+    	# kind of error
+
+        thresh: int = len(self.nodes)**2
+        count: int = 0
+
+        # Make attempts to find an unconnected pair
+        tryCount = 0
+
+        # Decide whether to make this recurrent
+        if random() < neat.recurrentOnlyProbability:
+            recurrent = True
+
+        # Find the first non-sensor so that the to-node won't look at sensors as
+    	# possible destinations
+        firstNonSensorIndex = 0
+        for index, node in enumerate(self.nodes):
+            if node.type is not NodeType.SENSOR:
+                firstNonSensorIndex = index
+                break
+
+        # Here is the recurrent finder loop- it is done separately
+        if recurrent:
+            while tryCount < tries:
+                # Some of the time try to make a recur loop
+                if random() > 0.5:
+                    loopRecurrent = True
+                else:
+                    loopRecurrent = False
+
+                if loopRecurrent:
+                    node1 = choice(self.nodes[firstNonSensorIndex:])
+                    node2 = node1
+                else:
+                    # Choose random node
+                    node1 = choice(self.nodes)
+                    node2 = choice(self.nodes[firstNonSensorIndex:])
+
+
+                # See if a recurrent link already exists  ALSO STOP AT END OF GENES!!!!
+                for gene in self.genes:
+
+                    if not (nodep2.type is not NodeType.SENSOR and # Don't allow SENSORS to get input
+                    not gene.link.inode is node1 and
+                    gene.link.onode is node2 and
+                    gene.link.recurrent):
+                        # Didn't make to the end of genes
+
+                        tryCount += 1
+                        break
+
+                else:
+                    # Made to the end of genes
+
+                    count = 0
+                    isRecurrent = self.phenotype.isRecurrent(node1.analogue, node2.analogue, count, thresh)
+
+                    # ADDED: CONSIDER connections out of outputs recurrent
+                    if (
+                    node1.type == NodeType.OUTPUT or
+                    node2.type == NodeType.OUTPUT
+                    ):
+                        isRecurrent = True
+
+                    # Make sure it finds the right kind of link (recur)
+                    if not isRecurrent:
+                        tryCount += 1
+                    else:
+                        tryCount = tries
+                        found = True
+
+
+        else:
+            # Loop to find a nonrecurrent link
+            while tryCount < tries:
+
+                # Chose random nodes
+                node1 = choice(self.nodes)
+                node2 = choice(self.nodes[firstNonSensor:])
+
+                # See if a recurrent link already exists  ALSO STOP AT END OF GENES!!!!
+                for gene in self.genes:
+
+                    if not (nodep2.type is not NodeType.SENSOR and # Don't allow SENSORS to get input
+                    not gene.link.inode is node1 and
+                    gene.link.onode is node2 and
+                    gene.link.recurrent):
+                        # Didn't make to the end of genes
+
+                        tryCount += 1
+                        break
+
+                else:
+                    # Made to the end of genes
+
+                    count = 0
+                    isRecurrent = self.phenotype.isRecurrent(node1.analogue, node2.analogue, count, thresh)
+
+                    # ADDED: CONSIDER connections out of outputs recurrent
+                    if (
+                    node1.type == NodeType.OUTPUT or
+                    node2.type == NodeType.OUTPUT
+                    ):
+                        isRecurrent = True
+
+                    # Make sure it finds the right kind of link (recur)
+                    if not isRecurrent:
+                        tryCount += 1
+                    else:
+                        tryCount = tries
+                        found = True
+
+            # End of normal link finding loop
+
+        if found:
+
+            # If it was supposed to be recurrent, make sure it gets labeled that way
+            if recurrent:
+                isRecurrent = True
+
+            # loop to find a non recurrent link
+            for innovation in innovations:
+                pass
+            # The innovation is totally novel
+            else:
+                # If the phenotype does not exist, exit
+                if phenotype == 0:
+                    vprint(1, 'Error: Attempt to add link to genome with no phenotype')
+                    return None
+
+                # Choose a random trait
+                trait = choice(self.traits)
+
+                # Choose the new weight
+                newWeight = uniform(-1, 1)
+
+                # Create the new gene
+                newGene = Gene(
+                    trait=trait,
+                    weight=newWeight,
+                    inode=node1,
+                    onode=node2,
+                    recurrent=isRecurrent,
+                    innovation=currentInnovationNumber,
+                    mutation=newWeight
+                )
+
+                # Add the innovation
+                innovations.append(Innovation(
+                    inode=node1.id,
+                    onode=node2.id,
+                    innovation=currentInnovationNumber,
+                    weight=newWeight,
+                    trait=trait
+                ))
+
+
+
+
+
         raise NotImplementedError
 
 

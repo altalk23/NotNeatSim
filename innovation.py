@@ -4,7 +4,7 @@ from enum import Enum
 
 class InnovationType(Enum):
     NEWNODE = 0
-	NEWLINK = 1
+    NEWLINK = 1
 
 class Innovation:
 

@@ -10,6 +10,7 @@ import neat
 import organism
 import specie as sp
 from genome import *
+from innovation import *
 from mutator import *
 from print import *
 
@@ -18,8 +19,10 @@ class Population:
     # Variable annotations
     organisms: List[Organism] = []
     species: List[Specie] = []
+    innovations: List[Innovation] = []
 
     currentNodeId: int
+    currentSpecieId: int
     currentInnovationNumber: int
 
     meanFitness: float
@@ -104,7 +107,7 @@ class Population:
                 # Found compatible specie, add organism to specie
                 if organism.genome.compatibility(compareOrganism.genome) < neat.compatibilityThreshold:
                     specie.organisms.append(organism)
-                    organism.specie = specie # TODO: move this to addOrganism module
+                    organism.specie = specie
                     break
 
             # Didn't find a match, create new specie
@@ -113,7 +116,9 @@ class Population:
                 newSpecie = sp.Specie(id=len(self.species) + 1)
                 self.species.append(newSpecie)
                 newSpecie.organisms.append(organism)
-                organism.specie = newSpecie # TODO: move this to addOrganism module
+                organism.specie = newSpecie
+
+        self.currentSpecieId = len(self.species)
 
 
     # Certified UwU moment
@@ -198,7 +203,7 @@ class Population:
         precisionSkim: float = 0.0
         totalOffspring: int = 0
         for specie in sortedSpecies:
-            precisionSkim = specie.countOffsprint(precisionSkim)
+            precisionSkim = specie.countOffspring(precisionSkim)
             totalOffspring += specie.expectedOffspring
 
         # If we lost precision, give an extra baby to the best Species
@@ -209,7 +214,7 @@ class Population:
         # Achievement get: How Did We Get Here
         if totalOffspring < len(self.organisms):
             for specie in self.species:
-                if specie is bestSpecie:
+                if specie is sortedSpecies[0]:
                     specie.expectedOffspring = len(self.organisms)
                 else:
                     specie.expectedOffspring = 0
@@ -355,7 +360,7 @@ class Population:
 
 
         # Kill of all organism marked for death
-        organismKill = reversed(list(enumerate(self.organism.copy())))
+        organismKill = reversed(list(enumerate(self.organisms.copy())))
         for index, organism in organismKill:
             if organism.eliminate:
                 organism.specie.organisms.remove(organism)

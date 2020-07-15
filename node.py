@@ -46,6 +46,8 @@ class Node:
 
     id: int = 0
 
+    activeFlag: bool = False
+
 
     def __init__(self,
     type: NodeType = None,
@@ -101,7 +103,7 @@ class Node:
 
     # Just return activation for step
     def getActiveOut(self) -> float:
-        raise NotImplementedError
+        return max(self.output, 0)
 
 
     # Return activation from PREVIOUS time step
@@ -126,7 +128,28 @@ class Node:
 
     # Recursively deactivate backwards through the network
     def flushback(self) -> None:
-        raise NotImplementedError
+
+        # A sensor should not flush black
+        if self.type != NodeType.SENSOR:
+            if self.activationCount > 0:
+                self.activationCount = 0
+                self.output = 0
+                self.lastActivation = 0
+                self.lastActivation2 = 0
+
+            # Flush back recursively
+            for link in self.incoming:
+                # Flush the link itself (For future learning parameters possibility)
+                link.addedWeight = 0
+                if link.inode.activationCount > 0:
+                    link.inode.flushback()
+        else:
+            # Flush the SENSOR
+            self.activationCount = 0
+            self.output = 0
+            self.lastActivation = 0
+            self.lastActivation2 = 0
+        
 
 
     # Have node gain its properties from the trait
