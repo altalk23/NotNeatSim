@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from time import sleep
 from typing import Dict, List
 
 from yaml import load, Loader
@@ -16,9 +17,9 @@ def xorTest(generationCount: int) -> Population:
     population: Population
     startGenome: Genome
 
-    evals: List[int]
-    genes: List[int]
-    nodes: List[int]
+    evals: List[int] = [None for _ in range(neat.numberOfRuns)]
+    genes: List[int] = [None for _ in range(neat.numberOfRuns)]
+    nodes: List[int] = [None for _ in range(neat.numberOfRuns)]
 
     totalNodes: int = 0
     totalGenes: int = 0
@@ -45,12 +46,8 @@ def xorTest(generationCount: int) -> Population:
         vprint(1, 'Spawning the population')
         population = Population(genome=startGenome, size=neat.populationSize)
 
-        # Verify the population
-        vprint(1, 'Verifying the spawned population')
-        #population.verify()
-
         for generationNumber in range(1, generationCount + 1):
-            vprint(2, f'Epoch {generationNumber}')
+            vprint(1, f'Epoch {generationNumber}')
 
             # Check for success
             epoch = xorEpoch(population, experimentNumber, generationNumber)
@@ -108,6 +105,7 @@ def xorEpoch(population: Population, experimentNumber: int, generationNumber: in
 
     # Evaluate each organism
     for organism in population.organisms:
+        #print(organism.genome.id)
         if xorEvaluate(organism):
             passed = True
             winnerOrganism = organism
@@ -124,10 +122,10 @@ def xorEpoch(population: Population, experimentNumber: int, generationNumber: in
 
     # Print to file
     if passed:
-        population.printToFile(experimentNumber, generationNumber)
+        #population.printToFile(experimentNumber, generationNumber)
 
         vprint(1, f'Winner is organism number {winnerId}')
-        organism.printToFile(experimentNumber)
+        #organism.printToFile(experimentNumber)
 
     population.epoch(generationNumber)
 
@@ -178,6 +176,7 @@ def xorEvaluate(organism: Organism) -> bool:
     for input in inputList:
         network.loadSensors(input)
 
+
         success = network.activate()
 
         for relax in range(networkDepth + 1):
@@ -186,7 +185,11 @@ def xorEvaluate(organism: Organism) -> bool:
 
         outputList.append(network.outputs[0].output)
 
+        #vprint(3, f'Organism ID: {organism.genome.id} adaptable {network.adaptable}')
+
         network.flush()
+
+    network.outputList = outputList
 
     if success:
         errorsum = 0
@@ -206,13 +209,14 @@ def xorEvaluate(organism: Organism) -> bool:
     vprint(3, f'Organism: {organism.genome.id}')
     vprint(3, f'Error: {outputList} -> {errorsum}')
     vprint(3, f'Fitness: {organism.fitness}')
+    vprint(3, f'')
 
     # Check if meets conditions
     if (
-        abs(outputList[0] - expectedOutputList[0]) <= successOutputThreshold[0] and
-        abs(outputList[1] - expectedOutputList[1]) <= successOutputThreshold[1] and
-        abs(outputList[2] - expectedOutputList[2]) <= successOutputThreshold[2] and
-        abs(outputList[3] - expectedOutputList[3]) <= successOutputThreshold[3]
+        abs(outputList[0] - expectedOutputList[0]) < successOutputThreshold[0] and
+        abs(outputList[1] - expectedOutputList[1]) < successOutputThreshold[1] and
+        abs(outputList[2] - expectedOutputList[2]) < successOutputThreshold[2] and
+        abs(outputList[3] - expectedOutputList[3]) < successOutputThreshold[3]
     ):
         organism.winner = True
     else:

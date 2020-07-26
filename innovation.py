@@ -23,7 +23,7 @@ class Innovation:
 
     oldNum: float
 
-    recur: bool
+    recurrent: bool
 
 
     def __init__(self,
@@ -35,7 +35,7 @@ class Innovation:
     oldNum: float = None,
     weight: float = None,
     trait: int = None,
-    recur: bool = None) -> None:
+    recurrent: bool = False) -> None:
 
         # Constructor for the new node case
         if (inode is not None and
@@ -44,16 +44,17 @@ class Innovation:
         num2 is not None and
         newNode is not None and
         oldNum is not None):
-            raise NotImplementedError
+            self.type = InnovationType.NEWNODE
+            self.newWeight = None
+            self.newTrait = None
+            self.recurrent = None
 
-        # Constructor for a recur link
-        elif (inode is not None and
-        onode is not None and
-        num1 is not None and
-        weight is not None and
-        trait is not None and
-        recur is not None):
-            raise NotImplementedError
+            self.inode = inode
+            self.onode = onode
+            self.num1 = num1
+            self.num2 = num2
+            self.newNode = newNode
+            self.oldNum = oldNum
 
         # Constructor for new link case
         elif (inode is not None and
@@ -61,4 +62,13 @@ class Innovation:
         num1 is not None and
         weight is not None and
         trait is not None):
-            raise NotImplementedError
+            self.type = InnovationType.NEWLINK
+            self.num2 = None
+            self.newNode = None
+
+            self.inode = inode
+            self.onode = onode
+            self.num1 = num1
+            self.weight = weight
+            self.trait = trait
+            self.recurrent = recurrent

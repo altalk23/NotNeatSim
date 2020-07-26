@@ -53,4 +53,4 @@ newLinkTries: 20
 printFrequency: 30
 babiesStolen: 0
 numberOfRuns: 100
-verbosity: 3
+verbosity: 1

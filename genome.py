@@ -9,6 +9,8 @@ from mutator import *
 from network import *
 from node import *
 from nodeplace import *
+from population import *
+from print import *
 from trait import *
 import neat
 
@@ -17,11 +19,11 @@ class Genome:
     # Variable annotations
     id: int
 
-    traits: List[Trait] = []
-    genes: List[Gene] = []
-    nodes: List[Node] = []
+    traits: List[Trait]
+    genes: List[Gene]
+    nodes: List[Node]
 
-    phenotype: Network
+    phenotype: Network = None
 
 
     def __init__(self,
@@ -38,6 +40,10 @@ class Genome:
     linkProbability: float = None,
     type: int = None,
     data: Dict[str, object] = None) -> None:
+
+        self.traits = []
+        self.genes = []
+        self.nodes = []
 
         # This special constructor creates a Genome...
         if (id is not None and
@@ -61,7 +67,11 @@ class Genome:
         traits is not None and
         nodes is not None and
         genes is not None):
-            raise NotImplementedError
+
+            self.id = id
+            self.traits = traits
+            self.genes = genes
+            self.nodes = nodes
 
         # Constructor which takes in links (not genes) and creates a Genome
         elif (id is not None and
@@ -129,7 +139,6 @@ class Genome:
 
                 # NOTE: This line could be run through a recurrency check if desired
                 newLink = Link(weight=gene.link.weight, inode=inode, onode=onode, recurrent=gene.link.recurrent)
-
                 onode.incoming.append(newLink)
                 inode.outcoming.append(newLink)
 
@@ -151,8 +160,6 @@ class Genome:
         return newNet
 
 
-
-
     # For debugging: A number of tests can be run on a genome to check its integrity
     def verify(self) -> bool:
         raise NotImplementedError
@@ -169,13 +176,16 @@ class Genome:
 
         data['id'] = self.id
 
-        data['traits'] = self.traits
-        data['genes'] = self.genes
-        data['nodes'] = self.nodes
+        data['traits'] = [trait.toDict() for trait in self.traits]
+        data['genes'] = [gene.toDict() for gene in self.genes]
+        data['nodes'] = [node.toDict() for node in self.nodes]
+
+        return data
 
 
     # Duplicate this Genome to create a new one with the specified id
     def duplicate(self, id: int) -> Genome:
+        #print(f"duplicated with {id}")
         genome = deepcopy(self)
         genome.id = id
         return genome
@@ -193,17 +203,23 @@ class Genome:
 
     # Perturb params in one trait
     def mutateRandomTrait(self) -> None:
-        raise NotImplementedError
+        choice(self.traits).mutate()
 
 
     # Change random link's trait. Repeat count times
     def mutateLinkTrait(self, count: int) -> None:
-        raise NotImplementedError
+        for index in range(count):
+            gene = choice(self.genes)
+            trait = choice(self.traits)
+            gene.link.trait = trait
 
 
     # Change random node's trait count times
     def mutateNodeTrait(self, count: int) -> None:
-        raise NotImplementedError
+        for index in range(count):
+            node = choice(self.nodes)
+            trait = choice(self.traits)
+            node.trait = trait
 
 
     # Add Gaussian noise to linkweights either GAUSSIAN or UNIFORM (from zero)
@@ -223,7 +239,7 @@ class Genome:
 
                 # For severe ones
                 if severe:
-                    gausspoint = 0.7
+                    gausspoint = 0.3
                     coldgausspoint = 0.2
 
                 # For last genes
@@ -234,10 +250,10 @@ class Genome:
                 else:
                     # Half the time don't do any cold mutations
                     if random() > 0.5:
-                        gausspoint = rate
+                        gausspoint = 1 - rate
                         coldgausspoint = 0.1
                     else:
-                        gausspoint = rate
+                        gausspoint = 1 - rate
                         coldgausspoint = 0
 
                 randnum = uniform(-1, 1) * power
@@ -257,8 +273,6 @@ class Genome:
                 num += 1
 
 
-
-
     # Toggle genes on or off
     def mutateToggleEnable(self, count: int) -> None:
         raise NotImplementedError
@@ -270,15 +284,90 @@ class Genome:
 
 
     # Mutate genome by adding a node respresentation
-    def mutateAddNode(self, innovations: List[Innovation], currentInnovationNumber: int, currentNodeId: int) -> None:
-        raise NotImplementedError
+    def mutateAddNode(self, population: Population) -> None:
+
+        gene: Gene # The random gene
+        link: Link # Gene's link
+        inode: Node # Link's in node
+        onode: Node # Link's out node
+
+        weight: float # Link's weight
+        trait: Trait # Link's trait
+
+        newNode: Node # Create the new Node
+        newGene1: Gene
+        newGene2: Gene
+
+        # Alternative random gaussian choice of genes NOT USED in this
+        for _ in range(20):
+            gene = choice(self.genes)
+            if gene.enable and gene.link.inode.place is not NodePlace.BIAS:
+                break
+        else:
+            # If we couldn't find anything so say goodbye
+            return
+
+        # Disabled the gene
+        gene.enable = False
+
+        # Extract the link
+        link = gene.link
+        inode = link.inode
+        onode = link.onode
+        weight = link.weight
+        trait = link.trait
+
+
+        for innovation in population.innovations:
+            if (innovation.type is InnovationType.NEWNODE and
+            innovation.inode == inode.id and
+            innovation.onode == onode.id and
+            innovation.oldNum == gene.innovation):
+            # Here, the innovation has been done before
+
+                # Create the new node
+                newNode = Node(type=NodeType.NEURON, id=innovation.newNode, place=NodePlace.HIDDEN)
+                newNode.trait = self.traits[0]
+
+                # Create the new Genes
+                newGene1 = Gene(trait=trait, weight=1, inode=inode, onode=newNode, recurrent=link.recurrent, innovation=innovation.num1, mutation=0)
+                newGene2 = Gene(trait=trait, weight=1, inode=newNode, onode=onode, recurrent=False, innovation=innovation.num2, mutation=0)
+
+                break
+
+        else:
+            # The innovation is totally novel
+
+            # Create the new node
+            newNode = Node(type=NodeType.NEURON, id=population.currentNodeId, place=NodePlace.HIDDEN)
+            newNode.trait = self.traits[0]
+            population.currentNodeId += 1
+
+            # Create the new Genes
+            newGene1 = Gene(trait=trait, weight=1, inode=inode, onode=newNode, recurrent=link.recurrent, innovation=population.currentInnovationNumber, mutation=0)
+            newGene2 = Gene(trait=trait, weight=1, inode=newNode, onode=onode, recurrent=False, innovation=population.currentInnovationNumber + 1, mutation=0)
+
+            population.innovations.append(Innovation(
+                inode=inode.id,
+                onode=onode.id,
+                num1=population.currentInnovationNumber,
+                num2=population.currentInnovationNumber+1,
+                newNode=newNode.id,
+                oldNum=gene.innovation))
+            population.currentInnovationNumber += 2
+
+        self.addGene(newGene1)
+        self.addGene(newGene2)
+        self.insertNode(self.nodes, newNode)
+
 
     """
     CODED BY BIRKIY
     fixed
+    I guess
     """
     # Mutate the genome by adding a new link between 2 random nodes
-    def mutateAddLink(self, innovations: List[Innovation], currentInnovationNumber: int, tries: int) -> None:
+    def mutateAddLink(self, population: Population, tries: int) -> None:
         nodeCount: int # Counter for finding nodes
         node1: Node # Pointers to the nodes
         node2: Node # Pointers to the nodes
@@ -323,7 +412,7 @@ class Genome:
         # Here is the recurrent finder loop- it is done separately
         if recurrent:
             while tryCount < tries:
-                # Some of the time try to make a recur loop
+                # Some of the time try to make a recurrent loop
                 if random() > 0.5:
                     loopRecurrent = True
                 else:
@@ -377,12 +466,12 @@ class Genome:
 
                 # Chose random nodes
                 node1 = choice(self.nodes)
-                node2 = choice(self.nodes[firstNonSensor:])
+                node2 = choice(self.nodes[firstNonSensorIndex:])
 
                 # See if a recurrent link already exists  ALSO STOP AT END OF GENES!!!!
                 for gene in self.genes:
 
-                    if not (nodep2.type is not NodeType.SENSOR and # Don't allow SENSORS to get input
+                    if not (node2.type is not NodeType.SENSOR and # Don't allow SENSORS to get input
                     not gene.link.inode is node1 and
                     gene.link.onode is node2 and
                     gene.link.recurrent):
@@ -418,10 +507,28 @@ class Genome:
             # If it was supposed to be recurrent, make sure it gets labeled that way
             if recurrent:
                 isRecurrent = True
-
+            vprint(3, 'found')
             # loop to find a non recurrent link
             for innovation in innovations:
-                pass
+
+                # Match the innovation in the innovs list
+                if (innovation.type is InnovationType.NEWLINK and
+                innovation.inode == node1.id and
+                innovation.onode == node2.id and
+                innovation.recurrent == isRecurrent):
+
+                    # Create the new gene
+                    newGene = Gene(
+                        trait=trait,
+                        weight=newWeight,
+                        inode=node1,
+                        onode=node2,
+                        recurrent=isRecurrent,
+                        innovation=population.currentInnovationNumber,
+                        mutation=newWeight
+                    )
+
+                    break
             # The innovation is totally novel
             else:
                 # If the phenotype does not exist, exit
@@ -442,24 +549,24 @@ class Genome:
                     inode=node1,
                     onode=node2,
                     recurrent=isRecurrent,
-                    innovation=currentInnovationNumber,
+                    innovation=population.currentInnovationNumber,
                     mutation=newWeight
                 )
 
                 # Add the innovation
-                innovations.append(Innovation(
+                population.innovations.append(Innovation(
                     inode=node1.id,
                     onode=node2.id,
-                    innovation=currentInnovationNumber,
+                    num1=population.currentInnovationNumber,
                     weight=newWeight,
                     trait=trait
                 ))
 
+                population.currentInnovationNumber += 1
 
 
 
-
-        raise NotImplementedError
+            self.addGene(newGene)
 
 
     # Mutate genome by adding a sensor node
@@ -468,23 +575,391 @@ class Genome:
 
 
     # Adds a new gene that has been created through a mutation
-    def addGene(self, genes: List[Gene], gene: Gene) -> None:
-        raise NotImplementedError
+    def addGene(self, gene: Gene) -> None:
+        try:
+            index = next(i for i, g in enumerate(self.genes) if g.innovation >= gene.innovation)
+            self.genes.insert(index, gene)
+        except StopIteration:
+            self.genes.append(gene)
 
 
     # Inserts a Node into a given ordered list of Nodes in order
-    def insertNode(self, nodes: List[Node], node: Node) -> None:
-        raise NotImplementedError
+    def insertNode(self, nodelist: List[Node], node: Node) -> None:
+        #print(node.id, node.type, node.place)
+        try:
+            index = next(i for i, n in enumerate(nodelist) if n.id >= node.id)
+            nodelist.insert(index, node)
+        except StopIteration:
+            nodelist.append(node)
 
 
     # This method mates this Genome with another genome.
-    def mateMultipoint(self, genome: Genome, fitness1: float, fitness2: float) -> Genome:
-        raise NotImplementedError
+    def mateMultipoint(self, genome: Genome, genomeId: int, fitness1: float, fitness2: float, outside: bool) -> Genome:
+        # Moving through the two parents' traits
+        trait1: Trait
+        trait2: Trait
+
+        # Moving through the two parents' genes
+        i1: int = 0
+        i2: int = 0
+        chosenGene: Gene
+
+        # Tells if the first genome (this one) has better fitness or not
+        better: bool
+
+        # The baby Genome will contain these new Traits, NNodes, and Genes
+        newTraits: List[Trait] = []
+        newNodes: List[Node] = []
+        newGenes: List[Gene] = []
+
+        # Trait number for a node
+        traitNumber: int
+
+        newINode: Node
+        newONode: Node
+
+        #print("mate")
+        #self.print()
+        #genome.print()
+
+        # First, average the Traits from the 2 parents to form the baby's Traits
+        trait2 = genome.traits[0]
+        for trait1 in self.traits:
+            newTraits.append(Trait(trait1=trait1, trait2=trait2))
+
+        # Figure out which genome is better
+        better = fitness1 > fitness2 or len(self.genes) < len(genome.genes)
+
+        # Make sure all sensors and outputs are included
+        for node in genome.nodes:
+            if (node.place is NodePlace.INPUT or
+            node.place is NodePlace.BIAS or
+            node.place is NodePlace.OUTPUT):
+                if node.trait is not None:
+                    traitNumber = 0
+                else:
+                    traitNumber = node.trait.id - self.traits[0].id
+
+                # Create a new node off the sensor or output
+                newONode = Node(node=node, trait=newTraits[traitNumber])
+                self.insertNode(newNodes, newONode)
+
+
+        # Now move through the Genes of each parent until both genomes end
+        while i1 < len(self.genes) or i2 < len(genome.genes):
+            # Default to not skipping a chosen gene
+            skip = False
+
+            if i1 == len(self.genes):
+                chosenGene = genome.genes[i2]
+                i2 += 1
+                if better: skip = True
+
+            elif i2 == len(genome.genes):
+                chosenGene = self.genes[i1]
+                i1 += 1
+                if not better: skip = True
+
+            else:
+                innovation1 = self.genes[i1].innovation
+                innovation2 = genome.genes[i2].innovation
+
+                if innovation1 == innovation2:
+                    chosenGene = choice([self.genes[i1], genome.genes[i2]])
+
+                    # If one is disabled, the corresponding gene in the offspring will likely be disabled
+                    disable = False
+                    if not self.genes[i1].enable or not genome.genes[i2].enable:
+                        if random() < 0.75: disable = True
+
+                    i1 += 1
+                    i2 += 1
+
+                elif innovation1 < innovation2:
+                    chosenGene = self.genes[i1]
+                    i1 += 1
+                    if not better: skip = True
+
+                elif innovation2 < innovation1:
+                    chosenGene = genome.genes[i2]
+                    i2 += 1
+                    if better: skip = True
+
+
+            # Check to see if the chosengene conflicts with an already chosen gene
+            for chosenGene2 in newGenes:
+                if chosenGene2.link == chosenGene.link:
+                    skip = True
+
+            #print(chosenGene.link.inode.id, chosenGene.link.onode.id, "ids", skip, "skip")
+
+            # Now add the chosengene to the baby
+            if not skip:
+
+                # Get the trait pointer
+                if chosenGene.link.trait == None:
+                    traitNumber = self.traits[0].id - 1
+                else:
+                    traitNumber = chosenGene.link.trait.id - self.traits[0].id # The subtracted number normalizes depending on whether traits start counting at 1 or 0
+
+                # Next check for the nodes, add them if not in the baby Genome already
+                inode = chosenGene.link.inode
+
+                onode = chosenGene.link.onode
+
+                # Check for inode in the newnodes list
+                if inode.id < onode.id:
+
+                    # Checking for inode's existence
+                    for node in newNodes:
+                        if node.id == inode.id:
+                            newINode = node
+                            break
+                    else:
+                        # Here we know the node doesn't exist so we have to add it
+                        if inode.trait is None:
+                            nodeTraitNumber = 0
+                        else:
+                            nodeTraitNumber = inode.trait.id - self.traits[0].id
+
+                        newINode = Node(node=inode, trait=newTraits[nodeTraitNumber])
+                        self.insertNode(newNodes, newINode)
+
+                # Checking for onode's existence
+                for node in newNodes:
+                    if node.id == onode.id:
+                        newONode = node
+                        break
+                else:
+                    # Here we know the node doesn't exist so we have to add it
+                    if inode.trait is None:
+                        nodeTraitNumber = 0
+                    else:
+                        nodeTraitNumber = onode.trait.id - self.traits[0].id
+
+                    newONode = Node(node=onode, trait=newTraits[nodeTraitNumber])
+                    self.insertNode(newNodes, newONode)
+
+                # If the onode has a higher id than the inode we want to add it first
+                if onode.id < inode.id:
+
+                    # Checking for inode's existence
+                    for node in newNodes:
+                        if node.id == inode.id:
+                            newINode = node
+                            break
+                    else:
+                        # Here we know the node doesn't exist so we have to add it
+                        if inode.trait is None:
+                            nodeTraitNumber = 0
+                        else:
+                            nodeTraitNumber = inode.trait.id - self.traits[0].id
+
+                        newINode = Node(node=inode, trait=newTraits[nodeTraitNumber])
+                        self.insertNode(newNodes, newINode)
+
+
+                # Add the Gene
+                newGene = Gene(gene=chosenGene, trait=newTraits[traitNumber], inode=newINode, onode=newONode)
+
+                if disable:
+                    newGene.enable = False
+                    disable = False
+
+                newGenes.append(newGene)
+
+        newGenome = Genome(id=genomeId, traits=newTraits, nodes=newNodes, genes=newGenes)
+
+
+        #print("mate end")
+        #self.print()
+        #genome.print()
+        #newGenome.print()
+        return newGenome
 
 
     # This method mates like multipoint but instead of selecting one it averages their weights
-    def mateMultipointAverage(self, genome: Genome, fitness1: float, fitness2: float) -> Genome:
-        raise NotImplementedError
+    def mateMultipointAverage(self, genome: Genome, genomeId: int, fitness1: float, fitness2: float, outside: bool) -> Genome:
+        # Moving through the two parents' traits
+        trait1: Trait
+        trait2: Trait
+
+        # Moving through the two parents' genes
+        i1: int = 0
+        i2: int = 0
+        chosenGene: Gene
+
+        # Tells if the first genome (this one) has better fitness or not
+        better: bool
+
+        # The baby Genome will contain these new Traits, NNodes, and Genes
+        newTraits: List[Trait] = []
+        newNodes: List[Node] = []
+        newGenes: List[Gene] = []
+
+        # Trait number for a node
+        traitNumber: int
+
+        newINode: Node
+        newONode: Node
+
+        # First, average the Traits from the 2 parents to form the baby's Traits
+        trait2 = genome.traits[0]
+        for trait1 in self.traits:
+            newTraits.append(Trait(trait1=trait1, trait2=trait2))
+
+        # Figure out which genome is better
+        better = fitness1 > fitness2 or len(self.genes) < len(genome.genes)
+
+        # Make sure all sensors and outputs are included
+        for node in genome.nodes:
+            if (node.place is NodePlace.INPUT or
+            node.place is NodePlace.BIAS or
+            node.place is NodePlace.OUTPUT):
+                if node.trait is not None:
+                    traitNumber = 0
+                else:
+                    traitNumber = node.trait.id - self.traits[0].id
+
+                # Create a new node off the sensor or output
+                newONode = Node(node=node, trait=newTraits[traitNumber])
+                self.insertNode(newNodes, newONode)
+
+
+        # Now move through the Genes of each parent until both genomes end
+        while i1 < len(self.genes) or i2 < len(genome.genes):
+            # Default to not skipping a chosen gene
+            skip = False
+
+            if i1 == len(self.genes):
+                chosenGene = genome.genes[i2]
+                i2 += 1
+                if better: skip = True
+
+            elif i2 == len(genome.genes):
+                chosenGene = self.genes[i1]
+                i1 += 1
+                if not better: skip = True
+
+            else:
+                innovation1 = self.genes[i1].innovation
+                innovation2 = genome.genes[i2].innovation
+
+                if innovation1 == innovation2:
+                    # Average them into the avgene
+                    averageGene = Gene()
+                    averageGene.link.trait = choice([self.genes[i1].link.trait, genome.genes[i2].link.trait])
+
+                    # WEIGHTS AVERAGED HERE
+                    averageGene.link.weight = (self.genes[i1].link.weight + genome.genes[i2].link.weight) / 2
+
+                    averageGene.link.inode = choice([self.genes[i1].link.inode, genome.genes[i2].link.inode])
+                    averageGene.link.onode = choice([self.genes[i1].link.onode, genome.genes[i2].link.onode])
+                    averageGene.link.recurrent = choice([self.genes[i1].link.recurrent, genome.genes[i2].link.recurrent])
+
+                    averageGene.innovation = self.genes[i1].innovation
+                    averageGene.mutation = (self.genes[i1].mutation + genome.genes[i2].mutation) / 2
+
+                    averageGene.frozen = False
+
+                    # If one is disabled, the corresponding gene in the offspring will likely be disabled
+                    averageGene.enable = True
+                    if not self.genes[i1].enable or not genome.genes[i2].enable:
+                        if random() < 0.75: averageGene.enable = False
+
+                    chosenGene = averageGene
+
+                    i1 += 1
+                    i2 += 1
+
+                elif innovation1 < innovation2:
+                    chosenGene = self.genes[i1]
+                    i1 += 1
+                    if not better: skip = True
+
+                elif innovation2 < innovation1:
+                    chosenGene = genome.genes[i2]
+                    i2 += 1
+                    if better: skip = True
+
+
+            # Check to see if the chosengene conflicts with an already chosen gene
+            for chosenGene2 in newGenes:
+                if chosenGene2.link == chosenGene.link:
+                    skip = True
+                    
+            # Now add the chosengene to the baby
+            if not skip:
+
+                # Get the trait pointer
+                if chosenGene.link.trait == None:
+                    traitNumber = self.traits[0].id - 1
+                else:
+                    traitNumber = chosenGene.link.trait.id - self.traits[0].id # The subtracted number normalizes depending on whether traits start counting at 1 or 0
+
+                # Next check for the nodes, add them if not in the baby Genome already
+                inode = chosenGene.link.inode
+                onode = chosenGene.link.onode
+
+                # Check for inode in the newnodes list
+                if inode.id < onode.id:
+
+                    # Checking for inode's existence
+                    for node in newNodes:
+                        if node.id == inode.id:
+                            newINode = node
+                            break
+                    else:
+                        # Here we know the node doesn't exist so we have to add it
+                        if inode.trait is None:
+                            nodeTraitNumber = 0
+                        else:
+                            nodeTraitNumber = inode.trait.id - self.traits[0].id
+
+                        newINode = Node(node=inode, trait=newTraits[nodeTraitNumber])
+                        self.insertNode(newNodes, newINode)
+
+                # Checking for onode's existence
+                for node in newNodes:
+                    if node.id == onode.id:
+                        newONode = node
+                        break
+                else:
+                    # Here we know the node doesn't exist so we have to add it
+                    if inode.trait is None:
+                        nodeTraitNumber = 0
+                    else:
+                        nodeTraitNumber = onode.trait.id - self.traits[0].id
+
+                    newONode = Node(node=onode, trait=newTraits[nodeTraitNumber])
+                    self.insertNode(newNodes, newONode)
+
+                # If the onode has a higher id than the inode we want to add it first
+                if onode.id < inode.id:
+
+                    # Checking for inode's existence
+                    for node in newNodes:
+                        if node.id == inode.id:
+                            newINode = node
+                            break
+                    else:
+                        # Here we know the node doesn't exist so we have to add it
+                        if inode.trait is None:
+                            nodeTraitNumber = 0
+                        else:
+                            nodeTraitNumber = inode.trait.id - self.traits[0].id
+
+                        newINode = Node(node=inode, trait=newTraits[nodeTraitNumber])
+                        self.insertNode(newNodes, newINode)
+
+
+                # Add the Gene
+                newGene = Gene(gene=chosenGene, trait=newTraits[traitNumber], inode=newINode, onode=newONode)
+
+                newGenes.append(newGene)
+
+        newGenome = Genome(id=genomeId, traits=newTraits, nodes=newNodes, genes=newGenes)
+        return newGenome
 
 
     # This method is similar to a standard single point CROSSOVER operator.
@@ -496,35 +971,37 @@ class Genome:
     def compatibility(self, genome: Genome) -> float:
 
         maxSize = max(len(self.genes), len(genome.genes))
-        excess = abs(len(self.genes) - len(genome.genes))
+        excess = 0
         matching = 0
         disjoint = 0
         mutationDifference = 0
 
         i1 = 0
         i2 = 0
-
-        while i1 != len(self.genes) and i2 != len(genome.genes):
-
-            gene1 = self.genes[i1]
-            gene2 = genome.genes[i2]
-
-            if gene1.innovation == gene2.innovation:
-                matching += 1
-                mutationDifference += abs(gene1.mutation - gene2.mutation)
-
-                i1 += 1
+        while i1 < len(self.genes) or i2 < len(genome.genes):
+            if i1 == len(self.genes):
                 i2 += 1
-
-            elif gene1.innovation > gene2.innovation:
-                disjoint += 1
-
-                i2 += 1
-
-            elif gene1.innovation < gene2.innovation:
-                disjoint += 1
-
+                excess += 1
+            elif i2 == len(genome.genes):
                 i1 += 1
+                excess += 1
+            else:
+                gene1 = self.genes[i1]
+                gene2 = genome.genes[i2]
+
+                if gene1.innovation == gene2.innovation:
+                    matching += 1
+                    mutationDifference += abs(gene1.mutation - gene2.mutation)
+                    i1 += 1
+                    i2 += 1
+
+                elif gene1.innovation > gene2.innovation:
+                    disjoint += 1
+                    i2 += 1
+
+                elif gene1.innovation < gene2.innovation:
+                    disjoint += 1
+                    i1 += 1
 
         return (neat.disjointCoefficient * disjoint +
         neat.excessCoefficient * excess +
@@ -538,7 +1015,7 @@ class Genome:
 
     # Return number of non-disabled genes
     def extrons(self) -> int:
-        raise NotImplementedError
+        return sum(1 for gene in self.genes if gene.enable)
 
 
     # Randomize the trait pointers of all the node and connection genes
@@ -553,3 +1030,18 @@ class Genome:
         for gene in self.genes:
             trait = choice(self.traits)
             gene.link.trait = trait
+
+
+    def print(self):
+        genomeDict = self.toDict()
+        _id = genomeDict['id']
+        _traits = genomeDict['traits']
+        _nodes = genomeDict['nodes']
+        _genes = genomeDict['genes']
+        _traitprint = ''.join([f'Trait #{trait["id"]} {trait["params"]}\n' for trait in _traits])
+        _nodeprint = ''.join([f'Node #{node["id"]}\n' for node in _nodes])
+        _geneprint = ''.join([f'Node #{gene["input"]} ————{gene["weight"]}————> Node #{gene["output"]}\n' for gene in _genes])
+        vprint(1, f'Genome ID: {_id}')
+        vprint(1, f'Genome traits: {_traitprint}')
+        vprint(1, f'Genome nodes: {_nodeprint}')
+        vprint(1, f'Genome genes: {_geneprint}')

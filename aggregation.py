@@ -1,2 +1,4 @@
 class Aggregation:
-    pass
+
+    def sum(self, input):
+        return sum(input)

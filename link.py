@@ -19,7 +19,7 @@ class Link:
 
     addedWeight: float = False
 
-    params: List[float] = []
+    params: List[float]
 
     def __init__(self,
     trait: Trait = None,
@@ -28,6 +28,8 @@ class Link:
     onode: Node = None,
     recurrent: bool = None,
     link: Link = None) -> None:
+
+        self.params = []
 
         # Including a trait pointer in the Link creation
         if (trait is not None and
@@ -65,3 +67,6 @@ class Link:
 
     def deriveTrait(self, trait: Trait) -> None:
         self.trait = trait
+
+    def __eq__(self, comp: Link) -> bool:
+        return self.inode.id == comp.inode.id and self.onode.id == comp.onode.id and self.recurrent == comp.recurrent

@@ -11,19 +11,19 @@ traits:
 
 nodes:
   - id: 1
-    trait: 3
+    trait: 0
     type: 1
     place: 3
 
   - id: 2
     trait: 0
     type: 1
-    place: 1
+    place: 0
 
   - id: 3
     trait: 0
     type: 1
-    place: 1
+    place: 0
 
   - id: 4
     trait: 0
@@ -40,21 +40,20 @@ genes:
     mutation: 0
     enable: True
 
-  - trait: 1
-    input: 1
+  - trait: 2
+    input: 2
     output: 4
     weight: 0.0
     recurrent: 0
-    innovation: 1
+    innovation: 2
     mutation: 0
     enable: True
 
-  - trait: 1
-    input: 1
+  - trait: 3
+    input: 3
     output: 4
     weight: 0.0
     recurrent: 0
-    innovation: 1
+    innovation: 3
     mutation: 0
     enable: True
-    

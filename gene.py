@@ -21,7 +21,7 @@ class Gene:
         weight: float = None,
         inode: Node = None,
         onode: Node = None,
-        recur: bool = None,
+        recurrent: bool = None,
         innovation: float = None,
         mutation: int = None,
         file: TextIO = None,
@@ -29,21 +29,29 @@ class Gene:
         nodes: List[Node] = None,
         data: Dict[str, object] = None) -> None:
 
+        self.link = Link()
+
         # Construct a gene with a trait
         if (trait is not None and
         weight is not None and
         inode is not None and
         onode is not None and
-        recur is not None and
+        recurrent is not None and
         innovation is not None and
         mutation is not None):
-            raise NotImplementedError
+
+            self.enable = True
+            self.frozen = False
+
+            self.link = Link(trait=trait, weight=weight, inode=inode, onode=onode, recurrent=recurrent)
+            self.innovation = innovation
+            self.mutation = mutation
 
         # Construct a gene with no trait
         elif (weight is not None and
         inode is not None and
         onode is not None and
-        recur is not None and
+        recurrent is not None and
         innovation is not None and
         mutation is not None):
             raise NotImplementedError
@@ -53,7 +61,12 @@ class Gene:
         trait is not None and
         inode is not None and
         onode is not None):
-            raise NotImplementedError
+
+            self.link = Link(trait=trait, weight=gene.link.weight, inode=inode, onode=onode, recurrent=gene.link.recurrent)
+            self.innovation = gene.innovation
+            self.mutation = gene.mutation
+            self.enable = gene.enable
+            self.frozen = gene.frozen
 
         # Construct a gene from a file spec given traits and nodes
         elif (data is not None and
@@ -89,4 +102,15 @@ class Gene:
 
     # Return the dict representation of the object
     def toDict(self) -> Dict[str, object]:
-        raise NotImplementedError
+        data = {}
+
+        data['trait'] = self.link.trait.id
+        data['input'] = self.link.inode.id
+        data['output'] = self.link.onode.id
+        data['weight'] = self.link.weight
+        data['recurrent'] = self.link.recurrent
+        data['innovation'] = self.innovation
+        data['mutation'] = self.mutation
+        data['enable'] = self.enable
+
+        return data

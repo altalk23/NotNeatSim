@@ -17,9 +17,9 @@ from print import *
 class Population:
 
     # Variable annotations
-    organisms: List[Organism] = []
-    species: List[Specie] = []
-    innovations: List[Innovation] = []
+    organisms: List[Organism]
+    species: List[Specie]
+    innovations: List[Innovation]
 
     currentNodeId: int
     currentSpecieId: int
@@ -40,6 +40,10 @@ class Population:
     power: float = None,
 
     data: Dict[str, object] = None) -> None:
+
+        self.organisms = []
+        self.species = []
+        self.innovations = []
 
         # Construct off of a single spawning Genome without mutation
         if (genome is not None and
@@ -76,7 +80,7 @@ class Population:
         # Create copies of the genome
         for count in range(1, size+1):
             newGenome = genome.duplicate(count)
-            newGenome.mutateLinkWeights(1.0, 1.0, Mutator.GAUSSIAN)
+            newGenome.mutateLinkWeights(1.0, 1.0, Mutator.COLDGAUSSIAN)
             newGenome.randomizeTraits()
 
             newOrganism = organism.Organism(fitness=0.0, genome=newGenome, generation=1);
@@ -195,6 +199,7 @@ class Population:
         # Compute the expected number of offspring for each individual organism
         for organism in self.organisms:
             organism.expectedOffspring = organism.fitness / averageFitness
+            #print(f"id: {organism.genome.id} offspring: {organism.expectedOffspring}")
 
         # Sort the species by maximum fitness (using original fitness)
         sortedSpecies = sorted(self.species, key=lambda sp: sp.organisms[0].originalFitness, reverse=True)
@@ -219,8 +224,6 @@ class Population:
                 else:
                     specie.expectedOffspring = 0
 
-
-
         # Print out for debugging
         for specie in sortedSpecies:
             vprint(2, f'Specie #{specie.id}, Size {len(specie.organisms)}')
@@ -235,7 +238,11 @@ class Population:
         if sortedSpecies[0].organisms[0].originalFitness > self.highestFitness:
             self.highestFitness = sortedSpecies[0].organisms[0].originalFitness
             self.highestLastChanged = 0
-            vprint(2, f'New Population Record Fitness: {self.highestFitness}')
+            vprint(1, f'New Population Record Fitness: {self.highestFitness}')
+            vprint(1, f'Output list: {sortedSpecies[0].organisms[0].network.outputList}')
+            vprint(1, f'Node count: {len(sortedSpecies[0].organisms[0].network.nodes)}')
+            sortedSpecies[0].organisms[0].genome.print()
+            vprint(1, f'')
         else:
             self.highestLastChanged += 1
             vprint(2, f'{self.highestLastChanged} generations since last population fitness record: {self.highestFitness}')
@@ -381,6 +388,7 @@ class Population:
         # Remove all empty Species and age ones that survive
         organismCount = 0
         specieKill = reversed(list(enumerate(self.species.copy())))
+
         for index, specie in specieKill:
             # Remove the specie if empty
             if len(specie.organisms) < 1:
@@ -391,14 +399,14 @@ class Population:
                 self.species[index].age += 1
 
                 # Add them to the master list
-                for organism in specie.organism:
+                for organism in specie.organisms:
                     organism.genome.id = organismCount
                     organismCount += 1
                     self.organisms.append(organism)
 
 
         # Epoch completed
-        vprint(2, f'Epoch completed')
+        vprint(2, f'Epoch completed\n\n\n\n')
 
 
     # why

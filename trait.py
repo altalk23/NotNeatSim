@@ -39,7 +39,12 @@ class Trait:
 
     # Return the dict representation of the object
     def toDict(self) -> Dict[str, object]:
-        raise NotImplementedError
+        data = {}
+
+        data['id'] = self.id
+        data['params'] = self.params
+
+        return data
 
 
     # Perturb the trait parameters slightly

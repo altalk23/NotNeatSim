@@ -12,6 +12,7 @@ from nodetype import *
 from trait import *
 import neat
 
+
 class Node:
 
     # Variable annotations
@@ -30,16 +31,16 @@ class Node:
 
     type: NodeType = None
     place: NodePlace = None
-    activation: Callable = None
-    aggregation: Callable = None
+    activation: Callable = Activation.sigmoid
+    aggregation: Callable = Aggregation.sum
 
-    input: List[float] = []
+    input: List[float]
     output: float = 0
 
-    incoming: List[Link] = []
-    outcoming: List[Link] = []
+    incoming: List[Link]
+    outcoming: List[Link]
 
-    rowLevels: List[float] = []
+    rowLevels: List[float]
     row: int
     xpos: int
     ypos: int
@@ -58,11 +59,21 @@ class Node:
     traits: List[Trait] = None,
     data: Dict = None) -> None:
 
+        self.input = []
+
+        self.incoming = []
+        self.outcoming = []
+
+        self.rowLevels = []
+
         # Construct a node from type, id and place
         if (type is not None and
         id is not None and
         place is not None):
-            raise NotImplementedError
+
+            self.type = type
+            self.id = id
+            self.place = place
 
         # Construct a node from type and id
         elif (type is not None and
@@ -74,7 +85,11 @@ class Node:
         # Construct a node off another node for genome purposes
         elif (node is not None and
         trait is not None):
-            raise NotImplementedError
+
+            self.type = node.type
+            self.id = node.id
+            self.place = node.place
+            self.trait = trait
 
         # Generate the object from dict
         elif (data is not None and
@@ -98,7 +113,14 @@ class Node:
 
     # Return the dict representation of the object
     def toDict(self) -> Dict[str, object]:
-        raise NotImplementedError
+        data = {}
+
+        data['id'] = self.id
+        data['trait'] = self.trait.id
+        data['type'] = self.type
+        data['place'] = self.place
+
+        return data
 
 
     # Just return activation for step
@@ -149,7 +171,7 @@ class Node:
             self.output = 0
             self.lastActivation = 0
             self.lastActivation2 = 0
-        
+
 
 
     # Have node gain its properties from the trait
@@ -177,6 +199,9 @@ class Node:
 
         # Base case
         if self.type == NodeType.SENSOR:
+            return depth
+
+        elif len(self.incoming) == 0:
             return depth
 
         else:

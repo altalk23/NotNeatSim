@@ -8,6 +8,7 @@ from mutator import *
 from network import *
 import organism as org
 from population import *
+from print import *
 import neat
 
 class Specie:
@@ -28,7 +29,7 @@ class Specie:
     checked: bool = False
     obliterate: bool = False
 
-    organisms: List[org.Organism] = []
+    organisms: List[org.Organism]
 
 
     def __init__(self,
@@ -37,6 +38,7 @@ class Specie:
     data: Dict[str, object] = None) -> None:
 
         self.age = 1
+        self.organisms = []
 
         # Creates a specie
         if (id is not None):
@@ -118,10 +120,10 @@ class Specie:
     # Counts the number of offspring expected from all its members
     def countOffspring(self, skim: float) -> float:
 
-        expectedOffspring = 0
+        self.expectedOffspring = 0
 
         for organism in self.organisms:
-            expectedOffspring += organism.expectedOffspring // 1
+            self.expectedOffspring += int(organism.expectedOffspring // 1)
 
             skim += organism.expectedOffspring % 1
 
@@ -129,7 +131,7 @@ class Specie:
 		    #        Must be remedied later
 
             if skim > 0:
-                expectedOffspring += skim // 1
+                self.expectedOffspring += int(skim // 1)
                 skim -= skim // 1
 
         return skim
@@ -163,6 +165,9 @@ class Specie:
     # Perform mating and mutation to form next generation
     def reproduce(self, generation: int, population: Population, sortedSpecies: List[Specie]) -> None:
 
+        #print(f"expectedOffspring {self.expectedOffspring}")
+        #print(f"size of specie {self.id}: {len(self.organisms)}")
+
         # Variable annotations
 
         mom: org.Organism # Parent Organisms
@@ -194,8 +199,9 @@ class Specie:
         totalFitness: float = 0
         marble: float # The marble will have a number between 0 and totalFitness
         spin: float # Fitness total while the wheel is spinning
+        #print(len(self.organisms))
 
-
+        #print(f"sdsjdfk {self.expectedOffspring}")
         if self.expectedOffspring > 0 and len(self.organisms) == 0:
             vprint(1, 'Error: Attempt to reproduce out of empty specie')
 
@@ -205,15 +211,16 @@ class Specie:
 
             champion = self.organisms[0]
 
-            for count in range(self.expectedOffspring):
+            for newId in range(self.expectedOffspring):
                 outside = False
                 mutationStructureBaby = False
                 mateBaby = False
 
                 # If we have a super_champ (Population champion), finish off some special clones
                 if champion.superChampionOffspring > 0:
+                    #print("super chamion")
                     mom = champion
-                    newGenome = mom.genome.duplicate(count)
+                    newGenome = mom.genome.duplicate(newId)
 
                     # Most superchamp offspring will have their connection weights mutated only
                     if champion.superChampionOffspring > 1:
@@ -222,7 +229,7 @@ class Specie:
                         else:
                             # Sometimes we add a link to a superchamp
                             networkAnalogue = newGenome.genesis(generation)
-                            newGenome.mutateAddLink(population.innovations, population.currentInnovationNumber, neat.newLinkTries)
+                            newGenome.mutateAddLink(population, neat.newLinkTries)
                             networkAnalogue = None
                             mutationStructureBaby = True
 
@@ -237,8 +244,9 @@ class Specie:
 
                 # If we have a Species champion, just clone it
                 elif not championDone and self.expectedOffspring > 5:
+                    #print("champion")
                     mom = champion
-                    newGenome = mom.genome.duplicate(count)
+                    newGenome = mom.genome.duplicate(newId)
 
                     # Baby is just like mommy
                     baby = org.Organism(fitness=0, genome=newGenome, generation=generation)
@@ -247,18 +255,20 @@ class Specie:
 
                 # First, decide whether to mate or mutate, if there is only one organism in the pool, then always mutate
                 elif random() < neat.mutateOnlyProbability or poolSize == 0:
+                    #print("random")
                     # Choose the random parent
                     mom = choice(self.organisms)
-                    newGenome = mom.genome.duplicate(count)
+                    newGenome = mom.genome.duplicate(newId)
+
 
                     # Do the mutation depending on probabilities of various mutations
                     if random() < neat.mutateAddNodeProbability:
-                        newGenome.mutateAddNode(population.innovations, population.currentNodeId, population.currentInnovationNumber)
+                        newGenome.mutateAddNode(population)
                         mutationStructureBaby = True
 
                     elif random() < neat.mutateAddLinkProbability:
                         networkAnalogue = newGenome.genesis(generation)
-                        newGenome.mutateAddLink(population.innovations, population.currentInnovationNumber, neat.newLinkTries)
+                        newGenome.mutateAddLink(population, neat.newLinkTries)
                         networkAnalogue = None
                         mutationStructureBaby = True
 
@@ -286,6 +296,7 @@ class Specie:
 
                 # Otherwise we should mate
                 else:
+                    #print("mate")
                     # Choose the random mom
                     mom = choice(self.organisms)
 
@@ -312,60 +323,65 @@ class Specie:
                             dad = randomSpecie.organisms[0]
                             outside = True
 
-                        # Perform mating based on probabilities of differrent mating types
-                        if random() < neat.mateMultipointProbability:
-                            newGenome = mom.genome.mateMultipoint(dad.genome, count, mom.originalFitness, dad.originalFitness, outside)
-                        elif random() < neat.mateMultipointAverageProbability / (neat.mateMultipointAverageProbability + neat.mateSinglepointProbability):
-                            newGenome = mom.genome.mateMultipointAverage(dad.genome, count, mom.originalFitness, dad.originalFitness, outside)
+                    # Perform mating based on probabilities of differrent mating types
+                    if random() < neat.mateMultipointProbability:
+                        newGenome = mom.genome.mateMultipoint(dad.genome, newId, mom.originalFitness, dad.originalFitness, outside)
+                    elif random() < neat.mateMultipointAverageProbability / (neat.mateMultipointAverageProbability + neat.mateSinglepointProbability):
+                        newGenome = mom.genome.mateMultipointAverage(dad.genome, newId, mom.originalFitness, dad.originalFitness, outside)
+                    else:
+                        newGenome = mom.genome.mateSinglepoint(dad.genome, newId)
+
+                    mateBaby = True
+
+                    # Determine whether to mutate the baby's Genome
+                    if random() > neat.mateOnlyProbability or dad.genome.id == mom.genome.id or dad.genome.compatibility(mom.genome) == 0:
+                        # This is done randomly or if the mom and dad are the same organism
+
+                        # Copied from above
+
+                        # Do the mutation depending on probabilities of various mutations
+                        if random() < neat.mutateAddNodeProbability:
+                            newGenome.mutateAddNode(population)
+                            mutationStructureBaby = True
+
+                        elif random() < neat.mutateAddLinkProbability:
+                            networkAnalogue = newGenome.genesis(generation)
+                            newGenome.mutateAddLink(population, neat.newLinkTries)
+                            networkAnalogue = None
+                            mutationStructureBaby = True
+
                         else:
-                            newGenome = mom.genome.mateSinglepoint(dad.genome, count)
+                            # If we didn't do a structural mutation, we do the other kinds
+                            if random() < neat.mutateRandomTraitProbability:
+                                newGenome.mutateRandomTrait()
 
-                        mateBaby = True
+                            if random() < neat.mutateLinkTraitProbability:
+                                newGenome.mutateLinkTrait(1)
 
-                        # Determine whether to mutate the baby's Genome
-                        if random() > neat.mateOnlyProbability or dad.genome.id == mom.genome.id or dad.genome.compatibility(mom.genome) == 0:
-                            # This is done randomly or if the mom and dad are the same organism
+                            if random() < neat.mutateNodeTraitProbability:
+                                newGenome.mutateNodeTrait(1)
 
-                            # Copied from above
+                            if random() < neat.mutateLinkWeightsProbability:
+                                newGenome.mutateLinkWeights(neat.weightMutationPower, 1, Mutator.GAUSSIAN)
 
-                            # Do the mutation depending on probabilities of various mutations
-                            if random() < neat.mutateAddNodeProbability:
-                                newGenome.mutateAddNode(population.innovations, population.currentNodeId, population.currentInnovationNumber)
-                                mutationStructureBaby = True
+                            if random() < neat.mutateToggleEnableProbability:
+                                newGenome.mutateToggleEnable(1)
 
-                            elif random() < neat.mutateAddLinkProbability:
-                                networkAnalogue = newGenome.genesis(generation)
-                                newGenome.mutateAddLink(population.innovations, population.currentInnovationNumber, neat.newLinkTries)
-                                networkAnalogue = None
-                                mutationStructureBaby = True
+                            if random() < neat.mutateGeneReenableProbability:
+                                newGenome.mutateGeneReenable()
 
-                            else:
-                                # If we didn't do a structural mutation, we do the other kinds
-                                if random() < neat.mutateRandomTraitProbability:
-                                    newGenome.mutateRandomTrait()
 
-                                if random() < neat.mutateLinkTraitProbability:
-                                    newGenome.mutateLinkTrait(1)
 
-                                if random() < neat.mutateNodeTraitProbability:
-                                    newGenome.mutateNodeTrait(1)
-
-                                if random() < neat.mutateLinkWeightsProbability:
-                                    newGenome.mutateLinkWeights(neat.weightMutationPower, 1, Mutator.GAUSSIAN)
-
-                                if random() < neat.mutateToggleEnableProbability:
-                                    newGenome.mutateToggleEnable(1)
-
-                                if random() < neat.mutateGeneReenableProbability:
-                                    newGenome.mutateGeneReenable()
-
-                        baby = org.Organism(fitness=0, genome=newGenome, generation=generation)
+                    baby = org.Organism(fitness=0, genome=newGenome, generation=generation)
 
                 # Add the baby to its proper Species
                 # If it doesn't fit a Species, create a new one
-
+                #print("adgfshf\n\n\n")
+                #newGenome.print()
                 baby.mutationStructureBaby = mutationStructureBaby
                 baby.mateBaby = mateBaby
+
+                #print(f"genome id {newGenome.id} new id {newId}")
 
                 # Create the first species
                 if len(population.species) == 0:
@@ -379,6 +395,8 @@ class Specie:
 
                     # Search for each specie
                     for specie in population.species:
+                        #if len(specie.organisms) > 0:
+
                         compareOrganism = specie.organisms[0]
 
                         # Found compatible specie, add organism to specie
@@ -392,9 +410,13 @@ class Specie:
                         # Create the new specie
                         population.currentSpecieId += 1
                         newSpecie = Specie(id=population.currentSpecieId, novel=True)
-                        self.species.append(newSpecie)
+                        population.species.append(newSpecie)
                         newSpecie.organisms.append(baby)
                         baby.specie = newSpecie
+
+        #print(f"size of specie {self.id}: {len(self.organisms)}")
+        #for o in self.organisms:
+            #print(f"id: {o.genome.id}")
 
 
 
@@ -403,28 +425,11 @@ class Specie:
         self.organisms.sort(key = lambda org: org.fitness, reverse = True)
 
 
-    """
-    CODED BY BIRKIY
-    """
+
     # Compute an estimate of the average fitness of the specie
     def estimateAverage(self) -> float:
-        total: float = 0 # running total of fitnesses
-
-        # Note: Since evolution is happening in real-time, some organisms may not
-    	# have been around long enough to count them in the fitness evaluation
-
-        numOrg: float = 0 # counts number of orgs above the time_alive threshold
-
-        for organism in self.organisms:
-            if organism.timeAlive >= neat.timeAliveMinimum:
-                total += organism.fitness
-
-            if numOrg > 0:
-                averageEst = total / numOrg
-            else:
-                averageEst = 0
-
-        return averageEst
+        return (sum(org.fitness for org in self.organisms if org.timeAlive >= neat.timeAliveMinimum) /
+        sum(1 for org in self.organisms if org.timeAlive >= neat.timeAliveMinimum))
 
 
     # Like the usual reproduce method except only one offspring is produced

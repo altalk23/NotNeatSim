@@ -20,7 +20,7 @@ def main():
     choice = '1' # input('Number: ')
 
     if choice == '1':
-        population = experiments.xorTest(100)
+        population = experiments.xorTest(150)
     else:
         vprint(0, 'Not an option.')
 

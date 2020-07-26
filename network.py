@@ -5,6 +5,7 @@ from typing import List
 from genome import *
 from node import *
 from nodetype import *
+from print import *
 
 class Network:
 
@@ -12,9 +13,9 @@ class Network:
     linkCount: int = 0
     nodeCount: int = 0
 
-    nodes: List[Node] = []
-    inputs: List[Node] = []
-    outputs: List[Node] = []
+    nodes: List[Node]
+    inputs: List[Node]
+    outputs: List[Node]
 
     genotype: Genome = None
 
@@ -24,6 +25,8 @@ class Network:
 
     maxWeight: float = 0
     adaptable: bool = False
+
+    outputList: List[float]
 
 
     def __init__(self,
@@ -85,12 +88,14 @@ class Network:
 
 
     # Activates the net such that all outputs are active
-    def activate(self) -> None:
+    def activate(self) -> bool:
 
         oneTime = False
 
         # Keep activating until all the outputs have become active
         if self.outputsOff():
+
+
 
             # For each node, compute the aggregation of its incoming activation
             for node in self.nodes:
@@ -108,12 +113,11 @@ class Network:
                             node.inputs.append(link.weight * link.inode.getActiveOut())
 
                             if (link.inode.activeFlag or link.inode.type is NodeType.SENSOR):
-                                link.inode.activeFlag = True
+                                node.activeFlag = True
 
                         # Input over a time delayed connection
                         else:
                             node.inputs.append(link.weight * link.inode.getActiveOutPrevious())
-
 
             # Now activate all the non-sensor nodes off their incoming activation
             for node in self.nodes:
@@ -137,6 +141,28 @@ class Network:
 
                     node.activationCount += 1
 
+        if self.adaptable:
+            # ADAPTATION:  Adapt weights based on activations
+            for node in self.nodes:
+                if node.type is not NodeType.SENSOR:
+                    # For each incoming connection, perform adaptation based on the trait of the connection
+                    for link in node.incoming:
+                        if link.trait.id == 2 or link.trait.id == 3 or link.trait.id == 4:
+                            # In the recurrent case we must take the last activation of the input for calculating hebbian changes
+                            if link.recurrent:
+                                link.weight = neat.hebbian(link.weight,
+                                self.maxWeight,
+                                link.inode.lastActivation,
+                                link.onode.getActiveOut(),
+                                link.params[0:3])
+                            else:
+                                link.weight = neat.hebbian(link.weight,
+                                self.maxWeight,
+                                link.inode.getActiveOut(),
+                                link.onode.getActiveOut(),
+                                link.params[0:3])
+        return True
+
 
 
     # Add a new input node
@@ -151,11 +177,9 @@ class Network:
 
     # Loads sensor values
     def loadSensors(self, values: List[float]) -> None:
-        value = iter(values)
-        for input in self.inputs:
+        for input, value in zip(self.inputs, values):
             if input.type == NodeType.SENSOR:
-                input.loadSensor(next(value))
-
+                input.loadSensor(value)
 
 
     # Takes and array of output activations and OVERRIDES the outputs' actual activations
